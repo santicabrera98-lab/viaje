@@ -5,92 +5,197 @@
       "id": "vuelo_vlc_roma",
       "tipo": "vuelo",
       "titulo": "Vuelo Valencia ⇄ Roma",
-      "descripcion": "Ida jue 11/2/2027 (preferencia: a la noche). Vuelta lun 15/2/2027. 4 personas, solo mochila chica.",
-      "personas": 4,
-      "ida": {"origen": "VLC", "destinos": ["FCO", "CIA"], "fecha": "2027-02-11", "hora_min": "18:00"},
-      "vuelta": {"origenes": ["FCO", "CIA"], "destino": "VLC", "fecha": "2027-02-15"},
-      "referencia": {"valor": 60, "unidad": "ida y vuelta por persona"},
-      "fuentes": ["ryanair"]
+      "descripcion": "Ida jue 11/2/2027 (preferencia: a la noche). Vuelta lun 15/2/2027. Precio por 1 persona, solo mochila chica (viajan 4).",
+      "personas": 1,
+      "ida": {
+        "origen": "VLC",
+        "destinos": [
+          "FCO",
+          "CIA"
+        ],
+        "fecha": "2027-02-11",
+        "hora_min": "18:00"
+      },
+      "vuelta": {
+        "origenes": [
+          "FCO",
+          "CIA"
+        ],
+        "destino": "VLC",
+        "fecha": "2027-02-15"
+      },
+      "referencia": {
+        "valor": 60,
+        "unidad": "ida y vuelta por persona"
+      },
+      "fuentes": [
+        "ryanair"
+      ],
+      "viajan": 4
     },
     {
       "id": "tren_mad_vlc",
       "tipo": "tren",
       "titulo": "Madrid → Valencia",
-      "descripcion": "Mié 10/2/2027, salida después de las 12:00. 2 personas.",
-      "personas": 2,
-      "origen": "madrid", "destino": "valencia", "fecha": "2027-02-10", "hora_min": "12:00",
-      "referencia": {"valor": 25, "unidad": "por persona"},
-      "fuentes": ["renfe", "ouigo", "flixbus"]
+      "descripcion": "Mié 10/2/2027, salida después de las 12:00. Precio por persona (viajan 2).",
+      "personas": 1,
+      "origen": "madrid",
+      "destino": "valencia",
+      "fecha": "2027-02-10",
+      "hora_min": "12:00",
+      "referencia": {
+        "valor": 25,
+        "unidad": "por persona"
+      },
+      "fuentes": [
+        "renfe",
+        "ouigo",
+        "flixbus"
+      ],
+      "viajan": 2
     },
     {
       "id": "tren_vlc_bcn",
       "tipo": "tren",
       "titulo": "Valencia → Barcelona",
-      "descripcion": "Mar 23/2/2027, cualquier hora. 2 personas.",
-      "personas": 2,
-      "origen": "valencia", "destino": "barcelona", "fecha": "2027-02-23", "hora_min": null,
-      "referencia": {"valor": 25, "unidad": "por persona"},
-      "fuentes": ["renfe", "ouigo", "flixbus"]
+      "descripcion": "Mar 23/2/2027, cualquier hora. Precio por persona (viajan 2).",
+      "personas": 1,
+      "origen": "valencia",
+      "destino": "barcelona",
+      "fecha": "2027-02-23",
+      "hora_min": null,
+      "referencia": {
+        "valor": 25,
+        "unidad": "por persona"
+      },
+      "fuentes": [
+        "renfe",
+        "ouigo",
+        "flixbus"
+      ],
+      "viajan": 2
     },
     {
       "id": "tren_bcn_vlc",
       "tipo": "tren",
       "titulo": "Barcelona → Valencia",
-      "descripcion": "Jue 25/2/2027, a la tarde (después de las 14:00). 2 personas.",
-      "personas": 2,
-      "origen": "barcelona", "destino": "valencia", "fecha": "2027-02-25", "hora_min": "14:00",
-      "referencia": {"valor": 25, "unidad": "por persona"},
-      "fuentes": ["renfe", "ouigo", "flixbus"]
+      "descripcion": "Jue 25/2/2027, a la tarde (después de las 14:00). Precio por persona (viajan 2).",
+      "personas": 1,
+      "origen": "barcelona",
+      "destino": "valencia",
+      "fecha": "2027-02-25",
+      "hora_min": "14:00",
+      "referencia": {
+        "valor": 25,
+        "unidad": "por persona"
+      },
+      "fuentes": [
+        "renfe",
+        "ouigo",
+        "flixbus"
+      ],
+      "viajan": 2
     },
     {
       "id": "tren_vlc_mad",
       "tipo": "tren",
       "titulo": "Valencia → Madrid",
-      "descripcion": "Sáb 27/2/2027, temprano (antes de las 11:00). 2 personas.",
-      "personas": 2,
-      "origen": "valencia", "destino": "madrid", "fecha": "2027-02-27", "hora_min": null, "hora_max": "11:00",
-      "referencia": {"valor": 25, "unidad": "por persona"},
-      "fuentes": ["renfe", "ouigo", "flixbus"]
+      "descripcion": "Sáb 27/2/2027, temprano (antes de las 11:00). Precio por persona (viajan 2).",
+      "personas": 1,
+      "origen": "valencia",
+      "destino": "madrid",
+      "fecha": "2027-02-27",
+      "hora_min": null,
+      "hora_max": "11:00",
+      "referencia": {
+        "valor": 25,
+        "unidad": "por persona"
+      },
+      "fuentes": [
+        "renfe",
+        "ouigo",
+        "flixbus"
+      ],
+      "viajan": 2
     },
     {
       "id": "hotel_roma",
       "tipo": "alojamiento",
       "titulo": "Roma: hostel 4 noches",
-      "descripcion": "Check-in jue 11/2 (llegada ~medianoche) a lun 15/2. 4 personas. Recepción 24 h obligatoria. Zonas: Monti, Termini (lado Monti), San Giovanni, San Lorenzo.",
-      "personas": 4, "checkin": "2027-02-11", "checkout": "2027-02-15", "noches": 4,
-      "referencia": {"valor": 130, "unidad": "por persona, las 4 noches"},
-      "fuentes": ["hostelworld"],
-      "hostelworld": {"url": "https://www.hostelworld.com/hostels/europe/italy/rome/"}
+      "descripcion": "Check-in jue 11/2 (llegada ~medianoche) a lun 15/2. Precio por persona y noche, búsqueda para 1 (viajan 4). Recepción 24 h obligatoria. Zonas: Monti, Termini (lado Monti), San Giovanni, San Lorenzo.",
+      "personas": 1,
+      "checkin": "2027-02-11",
+      "checkout": "2027-02-15",
+      "noches": 4,
+      "referencia": {
+        "valor": 130,
+        "unidad": "por persona, las 4 noches"
+      },
+      "fuentes": [
+        "hostelworld"
+      ],
+      "hostelworld": {
+        "url": "https://www.hostelworld.com/hostels/europe/italy/rome/"
+      },
+      "viajan": 4
     },
     {
       "id": "hotel_cordoba",
       "tipo": "alojamiento",
       "titulo": "Córdoba: 1 noche con estacionamiento",
-      "descripcion": "Vie 19/2 a sáb 20/2. 4 personas. Vamos en auto: necesita estacionamiento.",
-      "personas": 4, "checkin": "2027-02-19", "checkout": "2027-02-20", "noches": 1,
+      "descripcion": "Vie 19/2 a sáb 20/2. Búsqueda para 1 persona (viajan 4, en auto: necesita estacionamiento).",
+      "personas": 1,
+      "checkin": "2027-02-19",
+      "checkout": "2027-02-20",
+      "noches": 1,
       "referencia": null,
-      "fuentes": ["google_hotels"],
-      "google_hotels": {"q": "hoteles en Córdoba con parking"}
+      "fuentes": [
+        "google_hotels"
+      ],
+      "google_hotels": {
+        "q": "hoteles en Córdoba con parking"
+      },
+      "viajan": 4
     },
     {
       "id": "hotel_sevilla",
       "tipo": "alojamiento",
       "titulo": "Sevilla: 2 noches con estacionamiento",
-      "descripcion": "Sáb 20/2 a lun 22/2. 4 personas. Vamos en auto: necesita estacionamiento.",
-      "personas": 4, "checkin": "2027-02-20", "checkout": "2027-02-22", "noches": 2,
+      "descripcion": "Sáb 20/2 a lun 22/2. Búsqueda para 1 persona (viajan 4, en auto: necesita estacionamiento).",
+      "personas": 1,
+      "checkin": "2027-02-20",
+      "checkout": "2027-02-22",
+      "noches": 2,
       "referencia": null,
-      "fuentes": ["google_hotels"],
-      "google_hotels": {"q": "hoteles en Sevilla con parking"}
+      "fuentes": [
+        "google_hotels"
+      ],
+      "google_hotels": {
+        "q": "hoteles en Sevilla con parking"
+      },
+      "viajan": 4
     },
     {
       "id": "hotel_madrid",
       "tipo": "alojamiento",
       "titulo": "Madrid: 1 noche, habitación doble",
-      "descripcion": "Sáb 27/2 a dom 28/2. 2 personas.",
-      "personas": 2, "checkin": "2027-02-27", "checkout": "2027-02-28", "noches": 1,
-      "referencia": {"valor": 90, "unidad": "total la noche"},
-      "fuentes": ["google_hotels"],
-      "google_hotels": {"q": "hoteles en Madrid centro"}
+      "descripcion": "Sáb 27/2 a dom 28/2. Búsqueda para 1 persona (viajan 2 en habitación doble).",
+      "personas": 1,
+      "checkin": "2027-02-27",
+      "checkout": "2027-02-28",
+      "noches": 1,
+      "referencia": {
+        "valor": 45,
+        "unidad": "por persona, la noche (90 € la doble)"
+      },
+      "fuentes": [
+        "google_hotels"
+      ],
+      "google_hotels": {
+        "q": "hoteles en Madrid centro"
+      },
+      "viajan": 2
     }
-  ]
+  ],
+  "nota": "Todos los precios se consultan para 1 persona, para compararlos con el presupuesto por persona. 'viajan' indica cuántos van en realidad."
 }

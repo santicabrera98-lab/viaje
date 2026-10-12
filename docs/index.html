@@ -121,7 +121,8 @@ button.toggle:focus-visible, a:focus-visible { outline: 2px solid var(--accent);
   <div id="detalle"></div>
 
   <footer>
-    <p><strong>Cómo leerlo.</strong> Cada tramo muestra el mejor precio encontrado en la última corrida, el precio de referencia que fijamos y el mínimo visto desde que arrancó el rastreo. El semáforo dice: <span class="chip comprar">comprar</span> está en o por debajo de la referencia; <span class="chip minimo">mínimo</span> es el precio más bajo visto hasta ahora; <span class="chip cerca">cerca</span> está a menos de 15 % de la referencia; <span class="chip esperar">esperar</span> está más caro; <span class="chip no_abierto">venta no abierta</span> es que la fuente respondió pero todavía no vende esa fecha (el bot sigue probando cada 6 h).</p>
+    <p><strong>Todos los precios son por 1 persona</strong>: las búsquedas se hacen para un solo pasajero o huésped, para compararlas directo con el presupuesto por persona. Al comprar para el grupo real el precio puede variar (tarifas con pocos asientos, habitaciones para 4).</p>
+    <p style="margin-top:10px"><strong>Cómo leerlo.</strong> Cada tramo muestra el mejor precio encontrado en la última corrida, el precio de referencia que fijamos y el mínimo visto desde que arrancó el rastreo. El semáforo dice: <span class="chip comprar">comprar</span> está en o por debajo de la referencia; <span class="chip minimo">mínimo</span> es el precio más bajo visto hasta ahora; <span class="chip cerca">cerca</span> está a menos de 15 % de la referencia; <span class="chip esperar">esperar</span> está más caro; <span class="chip no_abierto">venta no abierta</span> es que la fuente respondió pero todavía no vende esa fecha (el bot sigue probando cada 6 h).</p>
     <p style="margin-top:10px"><strong>Lo que no se rastrea automáticamente</strong> (sus webs bloquean robots): Booking, Iryo directo, Alsa, BlaBlaCar. Iryo sí aparece a través de FlixBus. Enlaces para revisar a mano en cada tramo.</p>
   </footer>
 </div>
@@ -175,7 +176,7 @@ function unidadCorta(t) {
   if (t.tipo === "vuelo") return "ida+vuelta p/p";
   if (t.tipo === "tren") return "p/p";
   if (t.id === "hotel_roma") return "p/p y noche";
-  return "por noche";
+  return "por noche, 1 persona";
 }
 
 function filaVuelo(i, best) {
@@ -207,7 +208,7 @@ function tablaFuente(t, f) {
   }
   if (t.tipo === "tren") return `<div class="tabla"><table><thead><tr><th>Servicio</th><th class="num">Horario</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaTren(i, best)).join("")}</tbody></table></div>`;
   if (f.fuente === "hostelworld") return `<div class="tabla"><table><thead><tr><th>Hostel</th><th>Zona</th><th>Recep. 24 h</th><th class="num">Nota</th><th class="num">Privada p/p/noche</th><th class="num">Compartida p/p/noche</th><th class="num">${t.noches} noches p/p</th></tr></thead><tbody>${items.map(i => filaHostel(i, best, t)).join("")}</tbody></table></div>`;
-  return `<div class="tabla"><table><thead><tr><th>Alojamiento</th><th></th><th class="num">Nota</th><th>Parking</th><th class="num">Por noche</th><th class="num">${t.noches} noche${t.noches > 1 ? "s" : ""}</th></tr></thead><tbody>${items.map(i => filaHotel(i, best, t.noches)).join("")}</tbody></table></div>`;
+  return `<div class="tabla"><table><thead><tr><th>Alojamiento</th><th></th><th class="num">Nota</th><th>Parking</th><th class="num">Por noche (1 persona)</th><th class="num">${t.noches} noche${t.noches > 1 ? "s" : ""}</th></tr></thead><tbody>${items.map(i => filaHotel(i, best, t.noches)).join("")}</tbody></table></div>`;
 }
 
 function bloqueFuente(t, f, ultimoTs) {
