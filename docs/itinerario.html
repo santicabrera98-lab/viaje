@@ -144,6 +144,37 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .leaflet-popup-content a { color: var(--blue); text-decoration: none; font-weight: 500; }
 .leaflet-popup-close-button { color: var(--ink-2) !important; }
 #map.modo-agregar { cursor: crosshair; }
+/* tarjetas de vuelo (estilo ficha de Google) */
+.vuelo { background: var(--card-2); border-radius: var(--r-sm); overflow: hidden; }
+.vuelo .vh { display: flex; align-items: center; gap: 10px; padding: 10px 12px 6px; }
+.vuelo .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--vc); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+.vuelo .vh b { font-size: 14px; font-weight: 600; display: block; }
+.vuelo .vh small { color: var(--ink-2); font-size: 12px; }
+.vuelo .vh .sp { flex: 1; }
+.estado { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--fill); color: var(--ink-2); white-space: nowrap; }
+.estado.ok { background: rgba(52,199,89,.18); color: var(--green); }
+.estado.warn { background: rgba(255,149,0,.18); color: var(--orange); }
+.estado.bad { background: rgba(255,59,48,.18); color: var(--red); }
+.estado.info { background: rgba(0,122,255,.14); color: var(--blue); }
+.vuelo .vr { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 4px 12px 10px; }
+.vuelo .vt b { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.vuelo .vt span { font-size: 13px; font-weight: 600; }
+.vuelo .vt small { display: block; color: var(--ink-2); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vuelo .vt.r { text-align: right; }
+.vuelo .vl { text-align: center; color: var(--ink-2); font-size: 11px; min-width: 70px; }
+.vuelo .vl .line { height: 2px; background: var(--ink-3); border-radius: 1px; margin: 3px 0; position: relative; }
+.vuelo .vl .line::after { content: "✈"; position: absolute; right: -4px; top: -9px; font-size: 11px; color: var(--ink-2); }
+.vuelo .grupo { border-radius: 0; background: transparent; border-top: 1px solid var(--line); }
+.vuelo .grupo .fila { grid-template-columns: 84px 1fr; padding: 6px 12px; }
+.vuelo input::placeholder { text-transform: none; letter-spacing: 0; }
+.vuelo .grupo select { font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 0; width: 100%; }
+.vuelo .vf { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px 10px; border-top: 1px solid var(--line); }
+.vuelo .vf .btn { padding: 6px 11px; font-size: 12px; }
+.vuelo .nota { font-size: 11.5px; color: var(--ink-2); padding: 0 12px 8px; }
+.ajustes { flex-shrink: 0; background: var(--card); border-radius: var(--r); box-shadow: var(--shadow-sm); padding: 12px 14px; display: grid; gap: 8px; }
+.ajustes h3 { margin: 0; font-size: 13.5px; font-weight: 600; }
+.ajustes p { margin: 0; font-size: 12px; color: var(--ink-2); }
+.ajustes input { font: inherit; font-size: 13px; color: var(--ink); background: var(--card-2); border: 0; border-radius: 10px; padding: 8px 10px; width: 100%; }
 @media (prefers-reduced-motion: reduce) { .dia, .dia .chev, .toast, .mk { transition: none; } .dia.sel .cuerpo { animation: none; } }
 </style>
 </head>
@@ -213,11 +244,24 @@ const PLAN_BASE = { version: 2, dias: [
    lugares: [ { nombre: "Aeropuerto de Mendoza (MDZ)", lat: -32.8317, lng: -68.7929 } ] },
 ]};
 
+// Vuelos oficiales. Los horarios son locales de cada aeropuerto. "reserva" es el código de la aerolínea (PNR) y se guarda solo en este navegador.
+const VUELOS_BASE = [
+ { id: "v1", fecha: "2027-02-09", aerolinea: "LATAM", numero: "LA435", origen: "MDZ", origenNombre: "Mendoza", destino: "SCL", destinoNombre: "Santiago de Chile", salida: "12:15", llegada: "", llegadaDia: 0, terminal: "", reserva: "", estado: "programado", comprado: true, nota: "Conexión en Santiago con el LA708" },
+ { id: "v2", fecha: "2027-02-09", aerolinea: "LATAM", numero: "LA708", origen: "SCL", origenNombre: "Santiago de Chile", destino: "MAD", destinoNombre: "Madrid-Barajas", salida: "", llegada: "09:00", llegadaDia: 1, terminal: "T4", reserva: "", estado: "programado", comprado: true, nota: "Llega el 10/2 a las 9:00" },
+ { id: "v3", fecha: "2027-02-11", aerolinea: "Ryanair", numero: "FR994", origen: "VLC", origenNombre: "Valencia", destino: "FCO", destinoNombre: "Roma Fiumicino", salida: "20:25", llegada: "22:30", llegadaDia: 0, terminal: "", reserva: "", estado: "programado", comprado: false, nota: "Sin comprar todavía. Tarifa Basic, solo mochila chica" },
+ { id: "v4", fecha: "2027-02-15", aerolinea: "Ryanair", numero: "FR999", origen: "FCO", origenNombre: "Roma Fiumicino", destino: "VLC", destinoNombre: "Valencia", salida: "22:45", llegada: "00:50", llegadaDia: 1, terminal: "", reserva: "", estado: "programado", comprado: false, nota: "Sin comprar todavía. Alternativa FR993 15:10 → 17:15" },
+ { id: "v5", fecha: "2027-02-28", aerolinea: "LATAM", numero: "LA8065", origen: "MAD", origenNombre: "Madrid-Barajas", destino: "GRU", destinoNombre: "São Paulo Guarulhos", salida: "22:45", llegada: "", llegadaDia: 1, terminal: "T4S", reserva: "", estado: "programado", comprado: true, nota: "Conexión en São Paulo con el LA8019" },
+ { id: "v6", fecha: "2027-03-01", aerolinea: "LATAM", numero: "LA8019", origen: "GRU", origenNombre: "São Paulo Guarulhos", destino: "MDZ", destinoNombre: "Mendoza", salida: "", llegada: "12:05", llegadaDia: 0, terminal: "", reserva: "", estado: "programado", comprado: true, nota: "" },
+];
+PLAN_BASE.vuelos = VUELOS_BASE;
+const AEROLINEAS = { latam: { color: "#e8114b", sigla: "LA", web: "https://www.latamairlines.com/ar/es/mi-viaje" }, ryanair: { color: "#073590", sigla: "FR", web: "https://www.ryanair.com/es/es/check-in" }, vueling: { color: "#ffcc00", sigla: "VY", web: "https://www.vueling.com/es/mi-reserva" }, iberia: { color: "#d7192d", sigla: "IB", web: "https://www.iberia.com/es/gestion-de-reservas/" } };
+const ESTADOS = { programado: ["Programado", "info"], horario: ["En horario", "ok"], demorado: ["Demorado", "warn"], cancelado: ["Cancelado", "bad"], volando: ["En vuelo", "ok"], aterrizo: ["Aterrizó", "ok"], desconocido: ["Sin datos", ""] };
+
 // ---------- Estado ----------
 const KEY = "itinerario_es2027_v2";
 let plan, sel = 0, modoAgregar = false;
 function cargar() {
-  try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); if (p && p.dias) return p; } } catch (e) {}
+  try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); if (p && p.dias) { if (!p.vuelos) p.vuelos = JSON.parse(JSON.stringify(VUELOS_BASE)); return p; } } } catch (e) {}
   return JSON.parse(JSON.stringify(PLAN_BASE));
 }
 function guardar(msg = "Guardado") {
@@ -277,6 +321,78 @@ function verTodo() {
   if (todos.length) map.fitBounds(L.latLngBounds(todos.map(l => [l.lat, l.lng])), padding());
 }
 
+// ---------- Vuelos ----------
+function duracion(v) {
+  if (!v.salida || !v.llegada) return "";
+  const [h1, m1] = v.salida.split(":").map(Number), [h2, m2] = v.llegada.split(":").map(Number);
+  let min = (h2 * 60 + m2) - (h1 * 60 + m1) + (v.llegadaDia || 0) * 1440; if (min < 0) min += 1440;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+}
+function tarjetaVuelo(v, idx) {
+  const a = AEROLINEAS[(v.aerolinea || "").toLowerCase()] || { color: "var(--gray)", sigla: (v.numero || "??").slice(0, 2), web: null };
+  const [etq, cls] = ESTADOS[v.estado] || ESTADOS.desconocido;
+  const f = fmtFecha(v.fecha);
+  const g = `https://www.google.com/search?q=${encodeURIComponent("vuelo " + v.numero + " " + f.d + " " + f.mes + " 2027")}`;
+  const fr = `https://www.flightradar24.com/data/flights/${(v.numero || "").toLowerCase()}`;
+  const dur = duracion(v);
+  const live = v.live ? `<div class="nota">${esc(v.live)}</div>` : "";
+  return `<div class="vuelo" style="--vc:${a.color}" data-v="${idx}">
+    <div class="vh"><span class="logo">${esc(a.sigla)}</span><div><b>${esc(v.aerolinea)} ${esc(v.numero)}</b><small>${f.diaL} ${f.corta}${v.comprado ? " · comprado" : " · sin comprar"}</small></div><span class="sp"></span><span class="estado ${cls}">${etq}</span></div>
+    <div class="vr">
+      <div class="vt"><b>${esc(v.salida) || "--:--"}</b><span>${esc(v.origen)}</span><small>${esc(v.origenNombre)}</small></div>
+      <div class="vl"><small>${dur || "&nbsp;"}</small><div class="line"></div><small>Directo</small></div>
+      <div class="vt r"><b>${esc(v.llegada) || "--:--"}${v.llegadaDia ? `<sup style="font-size:11px;color:var(--ink-2)"> +${v.llegadaDia}</sup>` : ""}</b><span>${esc(v.destino)}</span><small>${esc(v.destinoNombre)}</small></div>
+    </div>
+    ${live}
+    <div class="grupo">
+      <div class="fila"><label>Reserva</label><input data-v="${idx}" data-vf="reserva" value="${esc(v.reserva)}" placeholder="Código de reserva (ej. ABC123)" autocomplete="off" spellcheck="false" style="font-family:var(--font);letter-spacing:.08em;text-transform:uppercase"></div>
+      <div class="fila"><label>Terminal</label><input data-v="${idx}" data-vf="terminal" value="${esc(v.terminal)}" placeholder="T4, T1…"></div>
+      <div class="fila"><label>Salida</label><input data-v="${idx}" data-vf="salida" value="${esc(v.salida)}" placeholder="HH:MM" inputmode="numeric"></div>
+      <div class="fila"><label>Llegada</label><input data-v="${idx}" data-vf="llegada" value="${esc(v.llegada)}" placeholder="HH:MM" inputmode="numeric"></div>
+      <div class="fila"><label>Vuelo</label><input data-v="${idx}" data-vf="numero" value="${esc(v.numero)}" placeholder="LA435"></div>
+      <div class="fila"><label>Estado</label><select data-v="${idx}" data-vf="estado">${Object.entries(ESTADOS).map(([k, [n]]) => `<option value="${k}" ${k === v.estado ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="fila"><label>Comprado</label><select data-v="${idx}" data-vf="comprado"><option value="1" ${v.comprado ? "selected" : ""}>Sí</option><option value="0" ${!v.comprado ? "selected" : ""}>Todavía no</option></select></div>
+      <div class="fila"><label>Nota</label><input data-v="${idx}" data-vf="nota" value="${esc(v.nota)}" placeholder="Conexión, equipaje…"></div>
+    </div>
+    <div class="vf">
+      <a class="btn" href="${g}" target="_blank" rel="noopener">Estado en Google</a>
+      <a class="btn" href="${fr}" target="_blank" rel="noopener">Flightradar24</a>
+      ${a.web ? `<a class="btn" href="${a.web}" target="_blank" rel="noopener">Mi reserva / check-in</a>` : ""}
+      ${getKey() ? `<button class="btn" data-act="estadoVivo" data-v="${idx}">Actualizar estado</button>` : ""}
+      <button class="btn danger" data-act="delVuelo" data-v="${idx}">Quitar</button>
+    </div>
+  </div>`;
+}
+function getKey() { try { return localStorage.getItem("aerodatabox_key") || ""; } catch (e) { return ""; } }
+async function estadoVivo(idx) {
+  const v = plan.vuelos[idx], key = getKey(); if (!key) return;
+  toast("Consultando…");
+  try {
+    const r = await fetch(`https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(v.numero)}/${v.fecha}?withAircraftImage=false&withLocation=false`, { headers: { "x-rapidapi-key": key, "x-rapidapi-host": "aerodatabox.p.rapidapi.com" } });
+    if (r.status === 204 || r.status === 404) { v.live = "La aerolínea todavía no publicó este vuelo (suele aparecer unos días antes)."; v.estado = "desconocido"; }
+    else if (!r.ok) { v.live = `No se pudo consultar (HTTP ${r.status}). Revisá la clave.`; }
+    else {
+      const d = (await r.json())[0];
+      if (!d) { v.live = "Sin datos para esa fecha."; }
+      else {
+        const st = (d.status || "").toLowerCase();
+        v.estado = st.includes("cancel") ? "cancelado" : st.includes("delay") ? "demorado" : st.includes("enroute") || st.includes("departed") ? "volando" : st.includes("arrived") ? "aterrizo" : st.includes("expected") || st.includes("checkin") || st.includes("boarding") || st.includes("gate") ? "horario" : "programado";
+        const dep = d.departure || {}, arr = d.arrival || {};
+        const hora = x => (x && (x.local || x).slice(11, 16)) || "";
+        if (hora(dep.scheduledTime)) v.salida = hora(dep.scheduledTime);
+        if (hora(arr.scheduledTime)) v.llegada = hora(arr.scheduledTime);
+        if (dep.terminal) v.terminal = "T" + String(dep.terminal).replace(/^T/i, "");
+        const partes = [];
+        if (dep.revisedTime && hora(dep.revisedTime) !== v.salida) partes.push(`salida revisada ${hora(dep.revisedTime)}`);
+        if (dep.gate) partes.push(`puerta ${dep.gate}`);
+        if (arr.terminal) partes.push(`llega a T${String(arr.terminal).replace(/^T/i, "")}`);
+        v.live = `Estado en vivo (${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}): ${d.status || "sin estado"}${partes.length ? " · " + partes.join(" · ") : ""}`;
+      }
+    }
+  } catch (e) { v.live = "No se pudo consultar el estado (sin conexión o clave inválida)."; }
+  guardar("Estado actualizado"); render(false);
+}
+
 // ---------- Panel ----------
 function render(ajustar = true) {
   const cont = document.getElementById("dias");
@@ -301,18 +417,20 @@ function render(ajustar = true) {
           <div class="fila"><label for="r${i}">Traslado</label><input id="r${i}" data-i="${i}" data-f="traslado" value="${esc(d.traslado)}"></div>
           <div class="fila"><label for="n${i}">Notas</label><textarea id="n${i}" data-i="${i}" data-f="notas">${esc(d.notas)}</textarea></div>
         </div>
+        ${(() => { const vs = plan.vuelos.map((v, k) => [v, k]).filter(([v]) => v.fecha === d.fecha); return vs.length ? `<div class="eyebrow">Vuelos</div>${vs.map(([v, k]) => tarjetaVuelo(v, k)).join("")}` : ""; })()}
         <div class="eyebrow">Lugares del día</div>
         <div class="lugares">${lugares || '<span class="hint">Sin lugares todavía. Buscá uno abajo o tocá el mapa.</span>'}</div>
         <div class="buscar"><input id="b${i}" placeholder="Buscar un lugar (ej. Trastevere, Roma)" autocomplete="off" data-buscar="${i}"><div class="sug" id="sug${i}" hidden></div></div>
         <div class="acciones">
           <button class="btn ${modoAgregar ? "on" : ""}" data-act="modo">${modoAgregar ? "Tocá el mapa…" : "Agregar tocando el mapa"}</button>
           ${ruta ? `<a class="btn" href="${ruta}" target="_blank" rel="noopener">Ruta en Google Maps</a>` : ""}
+          <button class="btn" data-act="addVuelo" data-i="${i}">+ Vuelo</button>
           <button class="btn" data-act="addDia" data-i="${i}">+ Día después</button>
           ${plan.dias.length > 1 ? `<button class="btn danger" data-act="delDia" data-i="${i}">Eliminar día</button>` : ""}
         </div>
         <div class="hint">Arrastrá los pines en el mapa para ajustarlos.</div>
       </div></section>`;
-  }).join("") + `<datalist id="ciudades">${["Madrid", "Valencia", "Roma", "Barcelona", "Mendoza", "En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
+  }).join("") + `<section class="ajustes"><h3>Estado de los vuelos en vivo</h3><p>Las tarjetas muestran el horario oficial y el estado que vos marques. Para que se actualicen solas (en horario, demorado, puerta), pegá una clave gratuita de <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener">AeroDataBox en RapidAPI</a>. Se guarda solo en este navegador.</p><input id="adbkey" value="${esc(getKey())}" placeholder="Clave de RapidAPI (opcional)" autocomplete="off" spellcheck="false"></section><datalist id="ciudades">${["Madrid", "Valencia", "Roma", "Barcelona", "Mendoza", "En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
   dibujarMapa(ajustar);
   if (ajustar && sel >= 0) { const el = document.getElementById("d" + sel); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
 }
@@ -328,6 +446,9 @@ cont.addEventListener("click", e => {
     case "up": if (j > 0) { [d.lugares[j - 1], d.lugares[j]] = [d.lugares[j], d.lugares[j - 1]]; guardar(); render(false); } break;
     case "down": if (j < d.lugares.length - 1) { [d.lugares[j + 1], d.lugares[j]] = [d.lugares[j], d.lugares[j + 1]]; guardar(); render(false); } break;
     case "modo": modoAgregar = !modoAgregar; document.getElementById("map").classList.toggle("modo-agregar", modoAgregar); render(false); break;
+    case "addVuelo": { const d0 = plan.dias[i]; plan.vuelos.push({ id: "v" + Date.now(), fecha: d0.fecha, aerolinea: "Ryanair", numero: "", origen: "", origenNombre: "", destino: "", destinoNombre: "", salida: "", llegada: "", llegadaDia: 0, terminal: "", reserva: "", estado: "programado", comprado: false, nota: "" }); guardar("Vuelo agregado"); render(false); break; }
+    case "delVuelo": plan.vuelos.splice(+b.dataset.v, 1); guardar("Vuelo quitado"); render(false); break;
+    case "estadoVivo": estadoVivo(+b.dataset.v); break;
     case "addDia": { const base = plan.dias[i]; const dt = new Date(base.fecha + "T00:00:00Z"); dt.setUTCDate(dt.getUTCDate() + 1);
       plan.dias.splice(i + 1, 0, { fecha: dt.toISOString().slice(0, 10), ciudad: base.ciudad, titulo: "Nuevo día", dormir: base.dormir, traslado: "", notas: "", lugares: [] });
       sel = i + 1; guardar("Día agregado (revisá las fechas siguientes)"); render(true); break; }
@@ -336,6 +457,15 @@ cont.addEventListener("click", e => {
 });
 cont.addEventListener("change", e => {
   const el = e.target;
+  if (el.id === "adbkey") { try { localStorage.setItem("aerodatabox_key", el.value.trim()); } catch (err) {} toast(el.value.trim() ? "Clave guardada" : "Clave borrada"); render(false); return; }
+  if (el.dataset.vf !== undefined) {
+    const v = plan.vuelos[+el.dataset.v], f = el.dataset.vf;
+    if (f === "comprado") v.comprado = el.value === "1";
+    else if (f === "reserva") v.reserva = el.value.trim().toUpperCase();
+    else if (f === "numero") { v.numero = el.value.trim().toUpperCase(); const pref = v.numero.slice(0, 2); const nom = { LA: "LATAM", FR: "Ryanair", VY: "Vueling", IB: "Iberia" }[pref]; if (nom) v.aerolinea = nom; }
+    else v[f] = el.value;
+    guardar(); render(false); return;
+  }
   if (el.dataset.act === "mover") { const i = +el.dataset.i, j = +el.dataset.j, k = +el.value; if (k !== i) { const [l] = plan.dias[i].lugares.splice(j, 1); plan.dias[k].lugares.push(l); guardar("Lugar movido"); render(false); } return; }
   if (el.dataset.f !== undefined) {
     const i = +el.dataset.i, f = el.dataset.f;
