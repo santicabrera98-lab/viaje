@@ -69,7 +69,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font); font-
 
 /* panel lateral de vidrio */
 .panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 84px); left: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); width: 400px; max-width: calc(100vw - 28px); z-index: 800; background: var(--glass); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6); border: 1px solid var(--glass-border); border-radius: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
-.panel .ph { padding: 14px 16px 8px; display: flex; align-items: baseline; gap: 8px; }
+.panel .ph { padding: 14px 16px 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .panel .ph h2 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
 .panel .ph span { color: var(--ink-2); font-size: 12.5px; }
 .lista { overflow-y: auto; padding: 4px 10px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overscroll-behavior: contain; }
@@ -161,7 +161,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   </div>
 </div>
 <aside class="panel">
-  <div class="ph"><h2>Itinerario</h2><span>tocá un día para abrirlo y editarlo</span></div>
+  <div class="ph"><h2>Itinerario</h2><span>tocá un día para abrirlo; tocalo otra vez para cerrarlo</span><span class="sp"></span><button class="btn" id="contraer" style="padding:4px 10px">Contraer</button></div>
   <div class="lista" id="dias"></div>
 </aside>
 <div class="toast" id="toast"></div>
@@ -237,7 +237,7 @@ map.zoomControl.setPosition("topright");
 L.tileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=es", { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"], attribution: "Mapa © Google" }).addTo(map);
 const capa = L.layerGroup().addTo(map), capaRuta = L.layerGroup().addTo(map);
 map.on("click", e => {
-  if (!modoAgregar) return;
+  if (!modoAgregar || sel < 0) return;
   plan.dias[sel].lugares.push({ nombre: "Nuevo lugar", lat: +e.latlng.lat.toFixed(5), lng: +e.latlng.lng.toFixed(5) });
   modoAgregar = false; document.getElementById("map").classList.remove("modo-agregar");
   guardar("Lugar agregado"); render(false);
@@ -264,6 +264,7 @@ function dibujarMapa(ajustar) {
   const seq = ptsRuta.map(p => [p.lat, p.lng]);
   if (seq.length > 1) L.polyline(seq, { color: "#8e8e93", weight: 2, opacity: .6, dashArray: "4 8", lineCap: "round" }).addTo(capaRuta);
   const d = plan.dias[sel];
+  if (!d) { if (ajustar) verTodo(); return; }
   if (d.lugares.length > 1) {
     const pts = d.lugares.map(l => [l.lat, l.lng]);
     L.polyline(pts, { color: "#ffffff", weight: 7, opacity: .9, lineJoin: "round", lineCap: "round" }).addTo(capaRuta);
@@ -313,13 +314,13 @@ function render(ajustar = true) {
       </div></section>`;
   }).join("") + `<datalist id="ciudades">${["Madrid", "Valencia", "Roma", "Barcelona", "Mendoza", "En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
   dibujarMapa(ajustar);
-  if (ajustar) { const el = document.getElementById("d" + sel); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  if (ajustar && sel >= 0) { const el = document.getElementById("d" + sel); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
 }
 
 // ---------- Eventos ----------
 const cont = document.getElementById("dias");
 cont.addEventListener("click", e => {
-  const cab = e.target.closest(".cab"); if (cab) { sel = +cab.dataset.sel; render(true); return; }
+  const cab = e.target.closest(".cab"); if (cab) { const k = +cab.dataset.sel; sel = (k === sel) ? -1 : k; if (sel === -1) { modoAgregar = false; document.getElementById("map").classList.remove("modo-agregar"); } render(true); return; }
   const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT") return;
   const i = +b.dataset.i, j = +b.dataset.j, d = plan.dias[sel];
   switch (b.dataset.act) {
@@ -365,6 +366,7 @@ cont.addEventListener("click", e => {
 document.addEventListener("click", e => { if (!e.target.closest(".buscar")) document.querySelectorAll(".sug").forEach(s => s.hidden = true); });
 
 document.getElementById("verTodo").onclick = verTodo;
+document.getElementById("contraer").onclick = () => { sel = -1; modoAgregar = false; document.getElementById("map").classList.remove("modo-agregar"); render(true); };
 document.getElementById("exportar").onclick = () => {
   const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "itinerario-espana-2027.json"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
