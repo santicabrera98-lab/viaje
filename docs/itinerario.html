@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Itinerario España 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+/* Layout: app a pantalla completa. Columna izquierda = cuaderno de viaje con un capítulo por día; derecha = mapa de Google. En móvil el mapa va arriba y los días debajo. */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --surface-2: #f6f7fa;
+  --ink: #16213a; --ink-2: #5a6480; --line: #d9dee8;
+  --accent: #1f4fd8; --accent-ink: #ffffff;
+  --ok: #138a4c; --ok-bg: #e2f5ea; --bad: #c0392b;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* color por ciudad (marcadores, cintas de los días) */
+  --c-mendoza: #7a7f8c; --c-madrid: #c8102e; --c-valencia: #e8862a; --c-roma: #7b3fa0;
+  --c-cordoba: #c9a227; --c-sevilla: #2a9d8f; --c-barcelona: #1f4fd8; --c-ruta: #5a6480;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420; --surface: #171d2c; --surface-2: #1d2436; --ink: #e8ecf4; --ink-2: #a3acc2; --line: #2b3449;
+    --accent: #7c9cff; --accent-ink: #0f1420; --ok: #5fd39a; --ok-bg: #12301f; --bad: #ff8a7a;
+    --c-mendoza: #9aa0ae; --c-madrid: #ff6b7f; --c-valencia: #ffa552; --c-roma: #c08ce6; --c-cordoba: #e6c454; --c-sevilla: #5fd0c2; --c-barcelona: #7c9cff; --c-ruta: #a3acc2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420; --surface: #171d2c; --surface-2: #1d2436; --ink: #e8ecf4; --ink-2: #a3acc2; --line: #2b3449;
+  --accent: #7c9cff; --accent-ink: #0f1420; --ok: #5fd39a; --ok-bg: #12301f; --bad: #ff8a7a;
+  --c-mendoza: #9aa0ae; --c-madrid: #ff6b7f; --c-valencia: #ffa552; --c-roma: #c08ce6; --c-cordoba: #e6c454; --c-sevilla: #5fd0c2; --c-barcelona: #7c9cff; --c-ruta: #a3acc2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; display: flex; flex-direction: column; }
+header.top { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
+header.top h1 { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+header.top .sub { color: var(--ink-2); font-size: 12.5px; }
+header.top .sp { flex: 1; }
+.btn { font: inherit; font-size: 12.5px; font-weight: 500; background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+.btn:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+main { flex: 1; display: grid; grid-template-columns: 420px minmax(0, 1fr); min-height: 0; width: 100%; }
+aside { overflow-y: auto; border-right: 1px solid var(--line); background: var(--bg); padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+#map { min-height: 0; min-width: 0; width: 100%; height: 100%; background: #dfe6ee; }
+@media (max-width: 800px) {
+  main { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; }
+  aside { border-right: 0; border-top: 1px solid var(--line); order: 2; }
+  #map { order: 1; }
+}
+.dia { flex-shrink: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+.dia.sel { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.dia .cab { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border-left: 5px solid var(--cc, var(--c-ruta)); }
+.dia .cab .n { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); min-width: 26px; }
+.dia .cab .fecha { font-family: var(--font-display); font-size: 17px; font-weight: 600; line-height: 1.1; }
+.dia .cab .fecha small { font-family: var(--font-body); font-size: 11.5px; color: var(--ink-2); display: block; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.dia .cab .ciudad { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--cc, var(--ink-2)); text-align: right; }
+.dia .cuerpo { display: none; padding: 4px 12px 12px; border-top: 1px dashed var(--line); }
+.dia.sel .cuerpo { display: grid; gap: 10px; }
+.campo { display: grid; gap: 3px; }
+.campo label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 600; }
+.campo input, .campo textarea, .campo select { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+.campo textarea { min-height: 56px; resize: vertical; }
+.fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lugares { display: grid; gap: 4px; }
+.lugar { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; background: var(--surface-2); }
+.lugar .pin { width: 20px; height: 20px; border-radius: 50%; background: var(--cc); color: #fff; font-family: var(--font-mono); font-size: 10.5px; display: grid; place-items: center; }
+.lugar input { font: inherit; font-size: 13px; background: transparent; border: 0; border-bottom: 1px solid transparent; color: var(--ink); width: 100%; padding: 2px 0; }
+.lugar input:hover, .lugar input:focus { border-bottom-color: var(--line); }
+.lugar .acc { display: flex; gap: 2px; }
+.ico { font: inherit; font-size: 12px; background: none; border: 0; color: var(--ink-2); cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.ico:hover { background: var(--line); color: var(--ink); }
+.ico.del:hover { color: var(--bad); }
+select.ico { max-width: 82px; font-size: 11px; border: 1px solid var(--line); background: var(--surface); }
+.buscar { position: relative; }
+.buscar input { font: inherit; font-size: 13px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--ink); }
+.sug { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.12); max-height: 220px; overflow-y: auto; }
+.sug button { display: block; width: 100%; text-align: left; font: inherit; font-size: 12.5px; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 7px 9px; cursor: pointer; color: var(--ink); }
+.sug button:hover { background: var(--surface-2); }
+.acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+.hint { font-size: 12px; color: var(--ink-2); }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 999px; font-size: 12.5px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 1000; }
+.toast.on { opacity: 1; }
+/* marcadores */
+.mk { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--cc); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); display: grid; place-items: center; }
+.mk span { transform: rotate(45deg); color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+.mk.dim { opacity: .35; }
+.mk.base { width: 32px; height: 32px; }
+.leaflet-popup-content { font-family: var(--font-body); font-size: 13px; margin: 10px 12px; }
+.leaflet-popup-content b { font-family: var(--font-display); font-size: 14px; }
+.leaflet-popup-content a { color: var(--accent); }
+.leaflet-container { font-family: var(--font-body); }
+#map.modo-agregar { cursor: crosshair; }
+.modo { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Itinerario · España y Roma, febrero 2027</h1>
+    <div class="sub">Tocá un día para abrirlo y editarlo. Todo se guarda en este navegador. <a href="index.html">Ver precios</a></div>
+  </div>
+  <span class="sp"></span>
+  <button class="btn" id="verTodo">Ver todo el viaje</button>
+  <button class="btn" id="exportar">Exportar</button>
+  <label class="btn" for="importar">Importar</label><input type="file" id="importar" accept="application/json" hidden>
+  <button class="btn danger" id="reset">Restablecer plan base</button>
+</header>
+<main>
+  <aside id="dias"></aside>
+  <div id="map"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Plan base ----------
+const PLAN_BASE = { version: 1, dias: [
+ { fecha: "2027-02-09", ciudad: "Mendoza", titulo: "Salida", dormir: "En el avión", traslado: "LATAM LA435 Mendoza 12:15 → Santiago, conexión LA708 → Madrid", notas: "Vuelos ya comprados.",
+   lugares: [ { nombre: "Aeropuerto de Mendoza (MDZ)", lat: -32.8317, lng: -68.7929 }, { nombre: "Aeropuerto de Santiago (SCL)", lat: -33.3930, lng: -70.7858 } ] },
+ { fecha: "2027-02-10", ciudad: "Valencia", titulo: "Llegada a Madrid y tren a Valencia", dormir: "Valencia, casa de mi hermana", traslado: "Llegada Madrid 9:00. Tren Madrid → Valencia después de las 12:00 (Ouigo desde Chamartín o Renfe desde Atocha, ~2 h)", notas: "Día de llegada: tranquilo, comer algo en Valencia.",
+   lugares: [ { nombre: "Aeropuerto Madrid-Barajas T4", lat: 40.4919, lng: -3.5930 }, { nombre: "Madrid Chamartín", lat: 40.4722, lng: -3.6806 }, { nombre: "Valencia Joaquín Sorolla", lat: 39.4604, lng: -0.3830 } ] },
+ { fecha: "2027-02-11", ciudad: "Roma", titulo: "Valencia de día, vuelo a Roma a la noche", dormir: "Roma, hostel (llegada ~medianoche)", traslado: "Ryanair FR994 Valencia 20:25 → Roma Fiumicino 22:30. De Fiumicino a Termini: tren Leonardo Express (32 min) o bus nocturno", notas: "Somos 4: yo, mi novia y mis dos hermanas. Solo mochila chica.",
+   lugares: [ { nombre: "Mercado Central de Valencia", lat: 39.4737, lng: -0.3787 }, { nombre: "Aeropuerto de Valencia (VLC)", lat: 39.4893, lng: -0.4816 }, { nombre: "Roma Fiumicino (FCO)", lat: 41.8003, lng: 12.2389 }, { nombre: "Roma Termini", lat: 41.9010, lng: 12.5012 } ] },
+ { fecha: "2027-02-12", ciudad: "Roma", titulo: "Roma antigua", dormir: "Roma, hostel", traslado: "A pie y metro", notas: "Coliseo con entrada reservada (conviene sacarla con anticipación). Foro y Palatino con la misma entrada.",
+   lugares: [ { nombre: "Colosseo", lat: 41.8902, lng: 12.4922 }, { nombre: "Foro Romano y Palatino", lat: 41.8925, lng: 12.4853 }, { nombre: "Monti (cena)", lat: 41.8947, lng: 12.4917 }, { nombre: "San Giovanni in Laterano", lat: 41.8859, lng: 12.5056 } ] },
+ { fecha: "2027-02-13", ciudad: "Roma", titulo: "Centro histórico", dormir: "Roma, hostel", traslado: "A pie", notas: "Todo caminando: Trevi temprano antes de la gente.",
+   lugares: [ { nombre: "Fontana di Trevi", lat: 41.9009, lng: 12.4833 }, { nombre: "Pantheon", lat: 41.8986, lng: 12.4769 }, { nombre: "Piazza Navona", lat: 41.8992, lng: 12.4731 }, { nombre: "Campo de' Fiori", lat: 41.8955, lng: 12.4722 }, { nombre: "Piazza di Spagna", lat: 41.9057, lng: 12.4823 }, { nombre: "Trastevere (cena)", lat: 41.8897, lng: 12.4694 } ] },
+ { fecha: "2027-02-14", ciudad: "Roma", titulo: "Vaticano", dormir: "Roma, hostel", traslado: "Metro línea A hasta Ottaviano", notas: "Museos Vaticanos con entrada anticipada. Domingo: la Basílica abre, los museos cierran salvo el último domingo del mes (gratis). Revisar.",
+   lugares: [ { nombre: "Musei Vaticani", lat: 41.9065, lng: 12.4536 }, { nombre: "Basilica di San Pietro", lat: 41.9022, lng: 12.4539 }, { nombre: "Castel Sant'Angelo", lat: 41.9031, lng: 12.4663 }, { nombre: "Villa Borghese", lat: 41.9142, lng: 12.4922 } ] },
+ { fecha: "2027-02-15", ciudad: "Valencia", titulo: "Último día en Roma y vuelo de vuelta", dormir: "Valencia, casa de mi hermana", traslado: "Ryanair FR999 Roma Fiumicino 22:45 → Valencia 00:50 (o FR993 15:10 → 17:15 si sale más barato)", notas: "Check-out del hostel, dejar mochilas en consigna. Testaccio o Aventino para la tarde.",
+   lugares: [ { nombre: "Giardino degli Aranci (Aventino)", lat: 41.8841, lng: 12.4785 }, { nombre: "Testaccio (mercado)", lat: 41.8773, lng: 12.4762 }, { nombre: "Roma Fiumicino (FCO)", lat: 41.8003, lng: 12.2389 } ] },
+ { fecha: "2027-02-16", ciudad: "Valencia", titulo: "Valencia", dormir: "Valencia, casa de mi hermana", traslado: "A pie y bici", notas: "Día tranquilo después de Roma.",
+   lugares: [ { nombre: "Ciudad de las Artes y las Ciencias", lat: 39.4545, lng: -0.3505 }, { nombre: "Jardín del Turia", lat: 39.4700, lng: -0.3650 }, { nombre: "Playa de la Malvarrosa", lat: 39.4810, lng: -0.3245 } ] },
+ { fecha: "2027-02-17", ciudad: "Valencia", titulo: "Valencia", dormir: "Valencia, casa de mi hermana", traslado: "", notas: "Paella en la Albufera y atardecer.",
+   lugares: [ { nombre: "Barrio del Carmen", lat: 39.4790, lng: -0.3790 }, { nombre: "La Albufera (El Palmar)", lat: 39.3333, lng: -0.3500 } ] },
+ { fecha: "2027-02-18", ciudad: "Valencia", titulo: "Retiramos el auto", dormir: "Valencia (a definir: ¿salir ya hacia el sur?)", traslado: "Retiro del auto de alquiler (lo gestiona mi hermana)", notas: "Opción: salir a la tarde y dormir en el camino (Albacete o Granada) para llegar más temprano a Córdoba.",
+   lugares: [ { nombre: "Valencia (retiro del auto)", lat: 39.4699, lng: -0.3763 } ] },
+ { fecha: "2027-02-19", ciudad: "Córdoba", titulo: "Ruta Valencia → Córdoba", dormir: "Córdoba, hotel con estacionamiento", traslado: "Auto, ~520 km por A-31/A-4 (~5 h sin paradas)", notas: "Salir temprano. Llegar a la tarde y recorrer la Judería y el Puente Romano al atardecer.",
+   lugares: [ { nombre: "Mezquita-Catedral de Córdoba", lat: 37.8790, lng: -4.7794 }, { nombre: "Judería", lat: 37.8795, lng: -4.7820 }, { nombre: "Puente Romano", lat: 37.8768, lng: -4.7778 } ] },
+ { fecha: "2027-02-20", ciudad: "Sevilla", titulo: "Córdoba de mañana, Sevilla de tarde", dormir: "Sevilla, hotel con estacionamiento", traslado: "Auto, ~140 km por A-4 (~1 h 30)", notas: "Mezquita a primera hora (de 8:30 a 9:30 entrada gratuita algunos días, revisar). Alcázar de Córdoba antes de salir.",
+   lugares: [ { nombre: "Alcázar de los Reyes Cristianos", lat: 37.8770, lng: -4.7817 }, { nombre: "Setas de Sevilla", lat: 37.3932, lng: -5.9919 }, { nombre: "Barrio de Santa Cruz", lat: 37.3850, lng: -5.9890 } ] },
+ { fecha: "2027-02-21", ciudad: "Sevilla", titulo: "Sevilla", dormir: "Sevilla, hotel con estacionamiento", traslado: "A pie", notas: "Real Alcázar con entrada reservada. Catedral y Giralda. Atardecer en Triana.",
+   lugares: [ { nombre: "Real Alcázar de Sevilla", lat: 37.3832, lng: -5.9903 }, { nombre: "Catedral y Giralda", lat: 37.3861, lng: -5.9926 }, { nombre: "Plaza de España", lat: 37.3772, lng: -5.9869 }, { nombre: "Triana", lat: 37.3833, lng: -6.0033 } ] },
+ { fecha: "2027-02-22", ciudad: "Valencia", titulo: "Vuelta a Valencia y devolución del auto", dormir: "Valencia, casa de mi hermana", traslado: "Auto, ~660 km (~6 h 30). Devolver el auto en Valencia", notas: "Día largo de ruta. Parada a mitad de camino.",
+   lugares: [ { nombre: "Sevilla (salida)", lat: 37.3891, lng: -5.9845 }, { nombre: "Valencia (devolución del auto)", lat: 39.4699, lng: -0.3763 } ] },
+ { fecha: "2027-02-23", ciudad: "Barcelona", titulo: "Tren a Barcelona", dormir: "Barcelona, casa de un amigo", traslado: "Tren Valencia → Barcelona (Renfe/Iryo, ~3 h)", notas: "",
+   lugares: [ { nombre: "Valencia Joaquín Sorolla", lat: 39.4604, lng: -0.3830 }, { nombre: "Barcelona Sants", lat: 41.3792, lng: 2.1400 }, { nombre: "Barri Gòtic", lat: 41.3833, lng: 2.1769 } ] },
+ { fecha: "2027-02-24", ciudad: "Barcelona", titulo: "Barcelona", dormir: "Barcelona, casa de un amigo", traslado: "Metro", notas: "Sagrada Família con entrada anticipada.",
+   lugares: [ { nombre: "Sagrada Família", lat: 41.4036, lng: 2.1744 }, { nombre: "Park Güell", lat: 41.4145, lng: 2.1527 }, { nombre: "Barceloneta", lat: 41.3797, lng: 2.1896 } ] },
+ { fecha: "2027-02-25", ciudad: "Valencia", titulo: "Barcelona de mañana, tren a Valencia a la tarde", dormir: "Valencia, casa de mi hermana", traslado: "Tren Barcelona → Valencia a la tarde (después de las 14:00)", notas: "",
+   lugares: [ { nombre: "Montjuïc", lat: 41.3636, lng: 2.1580 }, { nombre: "Barcelona Sants", lat: 41.3792, lng: 2.1400 } ] },
+ { fecha: "2027-02-26", ciudad: "Valencia", titulo: "Último día en Valencia", dormir: "Valencia, casa de mi hermana", traslado: "", notas: "Despedida con la familia.",
+   lugares: [ { nombre: "Plaza de la Virgen", lat: 39.4760, lng: -0.3754 } ] },
+ { fecha: "2027-02-27", ciudad: "Madrid", titulo: "Tren temprano a Madrid", dormir: "Madrid, hotel (habitación doble)", traslado: "Tren Valencia → Madrid antes de las 11:00 (Ouigo llega a Chamartín, Renfe a Atocha)", notas: "Tarde en el centro: Sol, Plaza Mayor, Palacio Real, Gran Vía.",
+   lugares: [ { nombre: "Madrid Chamartín", lat: 40.4722, lng: -3.6806 }, { nombre: "Puerta del Sol", lat: 40.4169, lng: -3.7035 }, { nombre: "Plaza Mayor", lat: 40.4155, lng: -3.7074 }, { nombre: "Palacio Real", lat: 40.4180, lng: -3.7143 }, { nombre: "Gran Vía", lat: 40.4200, lng: -3.7058 } ] },
+ { fecha: "2027-02-28", ciudad: "Madrid", titulo: "Madrid y vuelo de vuelta", dormir: "En el avión", traslado: "LATAM LA8065 Madrid 22:45 → São Paulo, conexión LA8019 → Mendoza (llegada 1/3 12:05). Al aeropuerto: metro línea 8 o Cercanías C1 a T4", notas: "Prado (gratis de 18 a 20, pero hay que salir al aeropuerto ~19:00). Retiro a la mañana.",
+   lugares: [ { nombre: "Parque del Retiro", lat: 40.4153, lng: -3.6844 }, { nombre: "Museo del Prado", lat: 40.4138, lng: -3.6921 }, { nombre: "Mercado de San Miguel", lat: 40.4155, lng: -3.7090 }, { nombre: "Aeropuerto Madrid-Barajas T4", lat: 40.4919, lng: -3.5930 } ] },
+ { fecha: "2027-03-01", ciudad: "Mendoza", titulo: "Llegada a Mendoza", dormir: "Casa", traslado: "Llegada 12:05", notas: "",
+   lugares: [ { nombre: "Aeropuerto de Mendoza (MDZ)", lat: -32.8317, lng: -68.7929 } ] },
+]};
+
+// ---------- Estado ----------
+const KEY = "itinerario_es2027_v1";
+let plan, sel = 0, modoAgregar = false;
+function cargar() {
+  try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); if (p && p.dias) return p; } } catch (e) {}
+  return JSON.parse(JSON.stringify(PLAN_BASE));
+}
+function guardar(msg = "Guardado en este navegador") {
+  try { localStorage.setItem(KEY, JSON.stringify(plan)); toast(msg); } catch (e) { toast("No se pudo guardar (almacenamiento bloqueado)"); }
+}
+let toastT;
+function toast(m) { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1600); }
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const colorCiudad = c => { const k = (c || "").toLowerCase().normalize("NFD").replace(/[^a-z]/g, ""); return ["mendoza","madrid","valencia","roma","cordoba","sevilla","barcelona"].includes(k) ? `var(--c-${k})` : "var(--c-ruta)"; };
+const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"], MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function fmtFecha(iso) { const [y, m, d] = iso.split("-").map(Number); const dt = new Date(Date.UTC(y, m - 1, d)); return { dia: DIAS[dt.getUTCDay()], corta: `${d} ${MESES[m - 1]}` }; }
+
+// ---------- Mapa (Google Maps como base, vía Leaflet) ----------
+const map = L.map("map", { zoomControl: true, attributionControl: true }).setView([40.5, 2.5], 5);
+L.tileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=es", { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"], attribution: "Mapa © Google" }).addTo(map);
+const capa = L.layerGroup().addTo(map), capaRuta = L.layerGroup().addTo(map);
+map.on("click", e => {
+  if (!modoAgregar) return;
+  plan.dias[sel].lugares.push({ nombre: "Nuevo lugar", lat: +e.latlng.lat.toFixed(5), lng: +e.latlng.lng.toFixed(5) });
+  modoAgregar = false; document.getElementById("map").classList.remove("modo-agregar");
+  guardar("Lugar agregado"); render(false);
+});
+function gmaps(l) { return `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`; }
+function gmapsRuta(d) { const pts = d.lugares.map(l => `${l.lat},${l.lng}`); return pts.length > 1 ? `https://www.google.com/maps/dir/${pts.join("/")}` : null; }
+function dibujarMapa(ajustar) {
+  capa.clearLayers(); capaRuta.clearLayers();
+  const ptsRuta = [];
+  plan.dias.forEach((d, i) => {
+    const cc = colorCiudad(d.ciudad);
+    d.lugares.forEach((l, j) => {
+      const icon = L.divIcon({ className: "", html: `<div class="mk ${i === sel ? "base" : "dim"}" style="--cc:${cc}"><span>${i === sel ? j + 1 : ""}</span></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] });
+      const m = L.marker([l.lat, l.lng], { icon, draggable: i === sel, zIndexOffset: i === sel ? 1000 : 0 }).addTo(capa);
+      const f = fmtFecha(d.fecha);
+      m.bindPopup(`<b>${esc(l.nombre)}</b><br><span style="color:var(--ink-2)">${f.dia} ${f.corta} · ${esc(d.ciudad)}</span><br><a href="${gmaps(l)}" target="_blank" rel="noopener">Abrir en Google Maps</a>`);
+      m.on("click", () => { if (i !== sel) { sel = i; render(true); } });
+      m.on("dragend", ev => { const p = ev.target.getLatLng(); l.lat = +p.lat.toFixed(5); l.lng = +p.lng.toFixed(5); guardar("Posición actualizada"); dibujarMapa(false); });
+    });
+    if (d.lugares.length) ptsRuta.push(d.lugares[d.lugares.length - 1]);
+  });
+  // ruta general del viaje: une el último lugar de cada día
+  const seq = ptsRuta.map(p => [p.lat, p.lng]);
+  if (seq.length > 1) L.polyline(seq, { color: "#16213a", weight: 2, opacity: .45, dashArray: "6 6" }).addTo(capaRuta);
+  const d = plan.dias[sel];
+  if (d.lugares.length > 1) L.polyline(d.lugares.map(l => [l.lat, l.lng]), { color: "#1f4fd8", weight: 3, opacity: .9 }).addTo(capaRuta);
+  if (ajustar && d.lugares.length) {
+    const b = L.latLngBounds(d.lugares.map(l => [l.lat, l.lng]));
+    map.fitBounds(b.pad(0.35), { maxZoom: 14, animate: true });
+  }
+}
+function verTodo() {
+  const todos = plan.dias.flatMap(d => d.lugares).filter(l => l.lat > 20); // Europa (deja afuera Mendoza/Santiago para que el mapa sea útil)
+  if (todos.length) map.fitBounds(L.latLngBounds(todos.map(l => [l.lat, l.lng])).pad(0.1));
+}
+
+// ---------- Panel de días ----------
+function render(ajustar = true) {
+  const cont = document.getElementById("dias");
+  cont.innerHTML = plan.dias.map((d, i) => {
+    const f = fmtFecha(d.fecha), cc = colorCiudad(d.ciudad), s = i === sel;
+    const opcionesDia = plan.dias.map((x, k) => `<option value="${k}" ${k === i ? "selected" : ""}>${k === i ? "mover a…" : fmtFecha(x.fecha).corta + " · " + esc(x.ciudad)}</option>`).join("");
+    const lugares = d.lugares.map((l, j) => `<div class="lugar" style="--cc:${cc}"><span class="pin">${j + 1}</span>
+        <input data-i="${i}" data-j="${j}" data-f="nombre" value="${esc(l.nombre)}" aria-label="Nombre del lugar">
+        <span class="acc"><button class="ico" title="Subir" data-act="up" data-i="${i}" data-j="${j}">▲</button><button class="ico" title="Bajar" data-act="down" data-i="${i}" data-j="${j}">▼</button>
+        <select class="ico" title="Mover a otro día" data-act="mover" data-i="${i}" data-j="${j}" aria-label="Mover a otro día">${opcionesDia}</select>
+        <a class="ico" href="${gmaps(l)}" target="_blank" rel="noopener" title="Abrir en Google Maps">↗</a>
+        <button class="ico del" title="Quitar" data-act="del" data-i="${i}" data-j="${j}">✕</button></span></div>`).join("");
+    const ruta = gmapsRuta(d);
+    return `<section class="dia ${s ? "sel" : ""}" style="--cc:${cc}" id="d${i}">
+      <div class="cab" data-sel="${i}"><span class="n">${String(i + 1).padStart(2, "0")}</span>
+        <div class="fecha">${f.corta}<small>${f.dia}</small></div>
+        <div class="ciudad">${esc(d.ciudad)}<br><span style="color:var(--ink-2);font-weight:400">${esc(d.titulo)}</span></div></div>
+      <div class="cuerpo">
+        <div class="fila2">
+          <div class="campo"><label for="t${i}">Título del día</label><input id="t${i}" data-i="${i}" data-f="titulo" value="${esc(d.titulo)}"></div>
+          <div class="campo"><label for="c${i}">Ciudad base</label><input id="c${i}" data-i="${i}" data-f="ciudad" value="${esc(d.ciudad)}" list="ciudades"></div>
+        </div>
+        <div class="campo"><label for="s${i}">Dónde dormimos</label><input id="s${i}" data-i="${i}" data-f="dormir" value="${esc(d.dormir)}"></div>
+        <div class="campo"><label for="r${i}">Traslado</label><input id="r${i}" data-i="${i}" data-f="traslado" value="${esc(d.traslado)}"></div>
+        <div class="campo"><label for="n${i}">Plan y notas</label><textarea id="n${i}" data-i="${i}" data-f="notas">${esc(d.notas)}</textarea></div>
+        <div class="campo"><label>Lugares del día (arrastrá los pines en el mapa para ajustarlos)</label><div class="lugares">${lugares || '<span class="hint">Sin lugares todavía.</span>'}</div></div>
+        <div class="buscar"><input id="b${i}" placeholder="Agregar lugar: escribí y elegí (ej. Trastevere, Roma)" autocomplete="off" data-buscar="${i}"><div class="sug" id="sug${i}" hidden></div></div>
+        <div class="acciones">
+          <button class="btn ${modoAgregar ? "modo" : ""}" data-act="modo">${modoAgregar ? "Tocá el mapa para ubicar el lugar…" : "Agregar tocando el mapa"}</button>
+          ${ruta ? `<a class="btn" href="${ruta}" target="_blank" rel="noopener">Ruta del día en Google Maps</a>` : ""}
+          <button class="btn" data-act="addDia" data-i="${i}">Agregar día después</button>
+          ${plan.dias.length > 1 ? `<button class="btn danger" data-act="delDia" data-i="${i}">Eliminar este día</button>` : ""}
+        </div>
+      </div></section>`;
+  }).join("") + `<datalist id="ciudades">${["Madrid","Valencia","Roma","Córdoba","Sevilla","Barcelona","Mendoza","En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
+  dibujarMapa(ajustar);
+  if (ajustar) { const el = document.getElementById("d" + sel); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+}
+
+// ---------- Eventos (delegados) ----------
+const cont = document.getElementById("dias");
+cont.addEventListener("click", e => {
+  const cab = e.target.closest(".cab"); if (cab) { sel = +cab.dataset.sel; render(true); return; }
+  const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT") return;
+  const i = +b.dataset.i, j = +b.dataset.j, d = plan.dias[sel];
+  switch (b.dataset.act) {
+    case "del": d.lugares.splice(j, 1); guardar("Lugar quitado"); render(false); break;
+    case "up": if (j > 0) { [d.lugares[j - 1], d.lugares[j]] = [d.lugares[j], d.lugares[j - 1]]; guardar(); render(false); } break;
+    case "down": if (j < d.lugares.length - 1) { [d.lugares[j + 1], d.lugares[j]] = [d.lugares[j], d.lugares[j + 1]]; guardar(); render(false); } break;
+    case "modo": modoAgregar = !modoAgregar; document.getElementById("map").classList.toggle("modo-agregar", modoAgregar); render(false); break;
+    case "addDia": { const base = plan.dias[i]; const dt = new Date(base.fecha + "T00:00:00Z"); dt.setUTCDate(dt.getUTCDate() + 1);
+      plan.dias.splice(i + 1, 0, { fecha: dt.toISOString().slice(0, 10), ciudad: base.ciudad, titulo: "Nuevo día", dormir: base.dormir, traslado: "", notas: "", lugares: [] });
+      sel = i + 1; guardar("Día agregado (revisá las fechas siguientes)"); render(true); break; }
+    case "delDia": plan.dias.splice(i, 1); sel = Math.max(0, Math.min(sel, plan.dias.length - 1)); guardar("Día eliminado"); render(true); break;
+  }
+});
+cont.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.act === "mover") { const i = +el.dataset.i, j = +el.dataset.j, k = +el.value; if (k !== i) { const [l] = plan.dias[i].lugares.splice(j, 1); plan.dias[k].lugares.push(l); guardar("Lugar movido"); render(false); } return; }
+  if (el.dataset.f !== undefined) {
+    const i = +el.dataset.i, f = el.dataset.f;
+    if (el.dataset.j !== undefined) plan.dias[i].lugares[+el.dataset.j][f] = el.value; else plan.dias[i][f] = el.value;
+    guardar(); if (f === "ciudad" || f === "nombre" || f === "titulo") render(false);
+  }
+});
+cont.addEventListener("input", e => { const el = e.target; if (el.dataset.f !== undefined && el.dataset.j === undefined) { plan.dias[+el.dataset.i][el.dataset.f] = el.value; } });
+// búsqueda de lugares (OpenStreetMap Nominatim; los resultados se ubican sobre el mapa de Google)
+let bT;
+cont.addEventListener("input", e => {
+  const el = e.target; if (el.dataset.buscar === undefined) return;
+  const i = +el.dataset.buscar, box = document.getElementById("sug" + i), q = el.value.trim();
+  clearTimeout(bT); if (q.length < 3) { box.hidden = true; return; }
+  bT = setTimeout(async () => {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=es&q=${encodeURIComponent(q)}`);
+      const res = await r.json();
+      box.innerHTML = res.length ? res.map(x => `<button data-lat="${x.lat}" data-lng="${x.lon}" data-nombre="${esc(x.display_name.split(",")[0])}">${esc(x.display_name)}</button>`).join("") : `<button disabled>Sin resultados</button>`;
+      box.hidden = false;
+    } catch (err) { box.innerHTML = `<button disabled>No se pudo buscar</button>`; box.hidden = false; }
+  }, 400);
+});
+cont.addEventListener("click", e => {
+  const b = e.target.closest(".sug button[data-lat]"); if (!b) return;
+  plan.dias[sel].lugares.push({ nombre: b.dataset.nombre, lat: +(+b.dataset.lat).toFixed(5), lng: +(+b.dataset.lng).toFixed(5) });
+  guardar("Lugar agregado"); render(true);
+});
+document.addEventListener("click", e => { if (!e.target.closest(".buscar")) document.querySelectorAll(".sug").forEach(s => s.hidden = true); });
+
+// ---------- Barra superior ----------
+document.getElementById("verTodo").onclick = verTodo;
+document.getElementById("exportar").onclick = () => {
+  const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "itinerario-espana-2027.json"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+document.getElementById("importar").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const p = JSON.parse(await f.text()); if (!p.dias) throw new Error(); plan = p; sel = 0; guardar("Itinerario importado"); render(true); }
+  catch (err) { toast("El archivo no es un itinerario válido"); }
+  e.target.value = "";
+};
+document.getElementById("reset").onclick = () => {
+  const b = document.getElementById("reset");
+  if (b.dataset.confirm) { plan = JSON.parse(JSON.stringify(PLAN_BASE)); sel = 0; delete b.dataset.confirm; b.textContent = "Restablecer plan base"; guardar("Plan base restablecido"); render(true); }
+  else { b.dataset.confirm = "1"; b.textContent = "¿Seguro? Tocá de nuevo para borrar tus cambios"; setTimeout(() => { delete b.dataset.confirm; b.textContent = "Restablecer plan base"; }, 4000); }
+};
+
+plan = cargar();
+render(false);
+verTodo();
+window.addEventListener("resize", () => map.invalidateSize());
+setTimeout(() => { map.invalidateSize(); verTodo(); }, 300);
+</script>
+</body>
+</html>
