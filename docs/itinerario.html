@@ -364,11 +364,18 @@ function tarjetaVuelo(v, idx) {
   </div>`;
 }
 function getKey() { try { return localStorage.getItem("aerodatabox_key") || ""; } catch (e) { return ""; } }
+function getMkt() { try { return localStorage.getItem("aerodatabox_mkt") || "apimarket"; } catch (e) { return "apimarket"; } }
+function adbRequest(path) {
+  const key = getKey();
+  if (getMkt() === "rapidapi") return [`https://aerodatabox.p.rapidapi.com${path}`, { "x-rapidapi-key": key, "x-rapidapi-host": "aerodatabox.p.rapidapi.com" }];
+  return [`https://prod.api.market/api/v1/aedbx/aerodatabox${path}`, { "x-api-market-key": key }];
+}
 async function estadoVivo(idx) {
   const v = plan.vuelos[idx], key = getKey(); if (!key) return;
   toast("Consultando…");
   try {
-    const r = await fetch(`https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(v.numero)}/${v.fecha}?withAircraftImage=false&withLocation=false`, { headers: { "x-rapidapi-key": key, "x-rapidapi-host": "aerodatabox.p.rapidapi.com" } });
+    const [url, headers] = adbRequest(`/flights/number/${encodeURIComponent(v.numero)}/${v.fecha}?withAircraftImage=false&withLocation=false`);
+    const r = await fetch(url, { headers });
     if (r.status === 204 || r.status === 404) { v.live = "La aerolínea todavía no publicó este vuelo (suele aparecer unos días antes)."; v.estado = "desconocido"; }
     else if (!r.ok) { v.live = `No se pudo consultar (HTTP ${r.status}). Revisá la clave.`; }
     else {
@@ -430,7 +437,7 @@ function render(ajustar = true) {
         </div>
         <div class="hint">Arrastrá los pines en el mapa para ajustarlos.</div>
       </div></section>`;
-  }).join("") + `<section class="ajustes"><h3>Estado de los vuelos en vivo</h3><p>Las tarjetas muestran el horario oficial y el estado que vos marques. Para que se actualicen solas (en horario, demorado, puerta), pegá una clave gratuita de <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener">AeroDataBox en RapidAPI</a>. Se guarda solo en este navegador.</p><input id="adbkey" value="${esc(getKey())}" placeholder="Clave de RapidAPI (opcional)" autocomplete="off" spellcheck="false"></section><datalist id="ciudades">${["Madrid", "Valencia", "Roma", "Barcelona", "Mendoza", "En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
+  }).join("") + `<section class="ajustes"><h3>Estado de los vuelos en vivo</h3><p>Las tarjetas muestran el horario oficial y el estado que vos marques. Para que se actualicen solas (en horario, demorado, puerta), pegá una clave de AeroDataBox, de <a href="https://api.market/store/aedbx/aerodatabox" target="_blank" rel="noopener">API.Market</a> o de <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener">RapidAPI</a>. Se guarda solo en este navegador.</p><div style="display:flex;gap:6px"><select id="adbmkt" style="font:inherit;font-size:13px;color:var(--ink);background:var(--card-2);border:0;border-radius:10px;padding:8px 10px"><option value="apimarket" ${getMkt() === "apimarket" ? "selected" : ""}>API.Market</option><option value="rapidapi" ${getMkt() === "rapidapi" ? "selected" : ""}>RapidAPI</option></select><input id="adbkey" value="${esc(getKey())}" placeholder="Pegá la clave acá" autocomplete="off" spellcheck="false"></div></section><datalist id="ciudades">${["Madrid", "Valencia", "Roma", "Barcelona", "Mendoza", "En ruta"].map(c => `<option value="${c}">`).join("")}</datalist>`;
   dibujarMapa(ajustar);
   if (ajustar && sel >= 0) { const el = document.getElementById("d" + sel); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
 }
@@ -457,6 +464,7 @@ cont.addEventListener("click", e => {
 });
 cont.addEventListener("change", e => {
   const el = e.target;
+  if (el.id === "adbmkt") { try { localStorage.setItem("aerodatabox_mkt", el.value); } catch (err) {} toast("Marketplace guardado"); return; }
   if (el.id === "adbkey") { try { localStorage.setItem("aerodatabox_key", el.value.trim()); } catch (err) {} toast(el.value.trim() ? "Clave guardada" : "Clave borrada"); render(false); return; }
   if (el.dataset.vf !== undefined) {
     const v = plan.vuelos[+el.dataset.v], f = el.dataset.vf;
