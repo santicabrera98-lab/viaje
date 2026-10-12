@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Viaje España 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* Layout: tablero tipo panel de horarios. Resumen arriba (una tarjeta por tramo), detalle abajo en secciones apiladas. */
+:root {
+  --bg: #f3f5f8;        /* papel frío */
+  --surface: #ffffff;
+  --ink: #16213a;       /* tinta azul marino */
+  --ink-2: #4a5570;
+  --line: #d7dce6;
+  --accent: #1f4fd8;    /* cobalto */
+  --accent-ink: #ffffff;
+  --ok: #138a4c;   --ok-bg: #e2f5ea;
+  --warn: #b7700a; --warn-bg: #fdf1dc;
+  --wait: #5b6478; --wait-bg: #e9ecf2;
+  --bad: #c0392b;  --bad-bg: #fbe5e2;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420; --surface: #171d2c; --ink: #e8ecf4; --ink-2: #a3acc2; --line: #2b3449;
+    --accent: #7c9cff; --accent-ink: #0f1420;
+    --ok: #5fd39a; --ok-bg: #12301f; --warn: #f0b85a; --warn-bg: #3a2a0c;
+    --wait: #a3acc2; --wait-bg: #232b3d; --bad: #ff8a7a; --bad-bg: #3d1a16;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420; --surface: #171d2c; --ink: #e8ecf4; --ink-2: #a3acc2; --line: #2b3449;
+  --accent: #7c9cff; --accent-ink: #0f1420;
+  --ok: #5fd39a; --ok-bg: #12301f; --warn: #f0b85a; --warn-bg: #3a2a0c;
+  --wait: #a3acc2; --wait-bg: #232b3d; --bad: #ff8a7a; --bad-bg: #3d1a16;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 600; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 24px; }
+header.top .meta { font-size: 13px; color: var(--ink-2); text-align: right; }
+
+.resumen { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 36px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; text-decoration: none; color: inherit; }
+.card:hover { border-color: var(--accent); }
+.card .t { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.card .precio { font-family: var(--font-mono); font-size: 26px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.card .precio small { font-size: 12px; font-family: var(--font-body); color: var(--ink-2); font-weight: 400; margin-left: 4px; }
+.card .sub { font-size: 12.5px; color: var(--ink-2); display: flex; gap: 10px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.02em; white-space: nowrap; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.chip.comprar { color: var(--ok); background: var(--ok-bg); }
+.chip.minimo { color: var(--ok); background: var(--ok-bg); }
+.chip.cerca { color: var(--warn); background: var(--warn-bg); }
+.chip.esperar { color: var(--wait); background: var(--wait-bg); }
+.chip.sin_datos { color: var(--bad); background: var(--bad-bg); }
+.chip.no_abierto { color: var(--wait); background: var(--wait-bg); }
+.tend { font-family: var(--font-mono); font-size: 12px; }
+.tend.down { color: var(--ok); } .tend.up { color: var(--bad); }
+
+section.tramo { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; margin-bottom: 18px; min-width: 0; }
+section.tramo .head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+section.tramo .desc { color: var(--ink-2); max-width: 70ch; margin-bottom: 14px; }
+.kpis { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-bottom: 14px; }
+.kpi .eyebrow { font-size: 11px; }
+.kpi .v { font-family: var(--font-mono); font-size: 18px; font-variant-numeric: tabular-nums; }
+.grafico { position: relative; height: 200px; margin-bottom: 16px; }
+.fuentes { display: grid; gap: 14px; }
+.fuente { border-top: 1px solid var(--line); padding-top: 12px; min-width: 0; }
+.fuente .fh { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-bottom: 6px; }
+.fuente .fh .n { font-family: var(--font-display); font-weight: 700; }
+.fuente .nota { font-size: 13px; color: var(--ink-2); }
+.fuente .nota.err { color: var(--bad); }
+.tabla { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.best td { font-weight: 600; }
+tr.night td:first-child::after { content: " noche"; font-size: 11px; color: var(--accent); font-weight: 600; margin-left: 4px; }
+td .si { color: var(--ok); font-weight: 600; } td .no { color: var(--bad); }
+.links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin-top: 12px; }
+footer { margin-top: 36px; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+footer ul { padding-left: 18px; margin: 6px 0 0; }
+#estado { padding: 24px; text-align: center; color: var(--ink-2); }
+button.toggle { font: inherit; font-size: 12px; background: none; border: 1px solid var(--line); color: var(--ink-2); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+button.toggle:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Rastreador de precios</p>
+      <h1>Viaje a España, febrero 2027</h1>
+    </div>
+    <div class="meta" id="meta">Cargando…</div>
+  </header>
+
+  <div id="estado">Cargando datos…</div>
+  <div class="resumen" id="resumen"></div>
+  <div id="detalle"></div>
+
+  <footer>
+    <p><strong>Cómo leerlo.</strong> Cada tramo muestra el mejor precio encontrado en la última corrida, el precio de referencia que fijamos y el mínimo visto desde que arrancó el rastreo. El semáforo dice: <span class="chip comprar">comprar</span> está en o por debajo de la referencia; <span class="chip minimo">mínimo</span> es el precio más bajo visto hasta ahora; <span class="chip cerca">cerca</span> está a menos de 15 % de la referencia; <span class="chip esperar">esperar</span> está más caro; <span class="chip no_abierto">venta no abierta</span> es que la fuente respondió pero todavía no vende esa fecha (el bot sigue probando cada 6 h).</p>
+    <p style="margin-top:10px"><strong>Lo que no se rastrea automáticamente</strong> (sus webs bloquean robots): Booking, Iryo directo, Alsa, BlaBlaCar. Iryo sí aparece a través de FlixBus. Enlaces para revisar a mano en cada tramo.</p>
+  </footer>
+</div>
+
+<script>
+const EUR = v => v == null ? "—" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(v);
+const fmtTs = ts => ts ? new Date(ts).toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtDia = ts => new Date(ts).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit" });
+const SEMAFORO = { comprar: "Comprar", minimo: "Mínimo histórico", cerca: "Cerca", esperar: "Esperar", sin_datos: "Sin datos", no_abierto: "Venta no abierta" };
+const NOMBRE_FUENTE = { ryanair: "Ryanair", renfe: "Renfe", ouigo: "Ouigo", flixbus: "FlixBus (incluye Iryo)", hostelworld: "Hostelworld", google_hotels: "Google Hotels" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function enlaces(t) {
+  const L = [];
+  if (t.tipo === "vuelo") {
+    L.push(["Ryanair", `https://www.ryanair.com/es/es/trip/flights/select?adults=${t.personas}&dateOut=${t.ida.fecha}&dateIn=${t.vuelta.fecha}&isReturn=true&originIata=${t.ida.origen}&destinationIata=FCO`]);
+    L.push(["Google Flights", `https://www.google.com/travel/flights?q=vuelos%20de%20Valencia%20a%20Roma%20${t.ida.fecha}%20vuelta%20${t.vuelta.fecha}&curr=EUR&hl=es`]);
+    L.push(["Vueling", "https://www.vueling.com/es"]);
+  } else if (t.tipo === "tren") {
+    L.push(["Renfe", "https://www.renfe.com/es/es"]); L.push(["Ouigo", "https://www.ouigo.com/es/"]); L.push(["Iryo", "https://iryo.eu/es/home"]);
+    L.push(["FlixBus", "https://www.flixbus.es/"]); L.push(["Alsa", "https://www.alsa.es/"]); L.push(["BlaBlaCar", "https://www.blablacar.es/"]);
+  } else {
+    if (t.hostelworld) L.push(["Hostelworld", `${t.hostelworld.url}?from=${t.checkin}&to=${t.checkout}&guests=${t.personas}&currency=EUR`]);
+    L.push(["Booking", `https://www.booking.com/searchresults.es.html?ss=${encodeURIComponent(t.titulo.split(":")[0])}&checkin=${t.checkin}&checkout=${t.checkout}&group_adults=${t.personas}&no_rooms=1&selected_currency=EUR`]);
+    L.push(["Google Hotels", `https://www.google.com/travel/search?q=${encodeURIComponent((t.google_hotels || {}).q || "hoteles " + t.titulo.split(":")[0])}&hl=es&curr=EUR`]);
+  }
+  return `<div class="links"><span class="muted">Revisar a mano:</span>${L.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join("")}</div>`;
+}
+
+function tendencia(serie) {
+  const v = serie.filter(s => s.mejor != null);
+  if (v.length < 2) return "";
+  const a = v[v.length - 2].mejor, b = v[v.length - 1].mejor;
+  if (a === b) return `<span class="tend">= igual que la corrida anterior</span>`;
+  const d = b - a, pct = Math.round(Math.abs(d) / a * 100);
+  return `<span class="tend ${d < 0 ? "down" : "up"}">${d < 0 ? "▼" : "▲"} ${EUR(Math.abs(d))} (${pct} %) vs. anterior</span>`;
+}
+
+function tarjeta(t) {
+  const ref = t.referencia ? `ref. ${EUR(t.referencia.valor)}` : "sin referencia";
+  return `<a class="card" href="#${t.id}">
+    <span class="chip ${t.semaforo}">${SEMAFORO[t.semaforo]}</span>
+    <span class="t">${esc(t.titulo)}</span>
+    <span class="precio">${EUR(t.actual)}<small>${esc(unidadCorta(t))}</small></span>
+    <span class="sub"><span>${ref}</span><span>mín. ${EUR(t.minimo_historico)}</span></span>
+    ${tendencia(t.serie)}
+  </a>`;
+}
+
+function unidadCorta(t) {
+  if (t.tipo === "vuelo") return "ida+vuelta p/p";
+  if (t.tipo === "tren") return "p/p";
+  if (t.id === "hotel_roma") return "p/p y noche";
+  return "por noche";
+}
+
+function filaVuelo(i, best) {
+  return `<tr class="${i.precio === best ? "best" : ""} ${i.nocturno ? "night" : ""}"><td>${esc(i.etiqueta)}</td><td>${i.tramo}</td><td class="num">${i.asientos > 0 ? i.asientos + " asientos" : ""}</td><td class="num">${EUR(i.precio)}</td></tr>`;
+}
+function filaTren(i, best) {
+  return `<tr class="${i.precio === best ? "best" : ""}"><td>${esc(i.etiqueta)}</td><td class="num">${i.salida}–${i.llegada}</td><td>${i.completo ? '<span class="no">completo</span>' : ""}</td><td class="num">${EUR(i.precio)}</td></tr>`;
+}
+function filaHostel(i, best, t) {
+  const noches = t.noches;
+  const r24 = i.recepcion24 == null ? "?" : (i.recepcion24 ? '<span class="si">sí</span>' : '<span class="no">no</span>');
+  return `<tr class="${i.precio === best ? "best" : ""}"><td><a href="${i.url}?from=${t.checkin}&to=${t.checkout}&guests=${t.personas}&currency=EUR" target="_blank" rel="noopener">${esc(i.etiqueta)}</a><br><span class="muted" style="font-size:12px">${esc(i.direccion || i.distancia || "")}</span></td>
+    <td>${esc(i.zona || "—")}</td><td>${r24}</td><td class="num">${i.puntuacion || "—"}</td>
+    <td class="num">${EUR(i.privada)}</td><td class="num">${EUR(i.compartida)}</td><td class="num">${EUR(i.precio * noches)}</td></tr>`;
+}
+function filaHotel(i, best, noches) {
+  return `<tr class="${i.precio === best ? "best" : ""}"><td>${i.url ? `<a href="${i.url}" target="_blank" rel="noopener">${esc(i.etiqueta)}</a>` : esc(i.etiqueta)}</td>
+    <td>${i.estrellas ? i.estrellas + "★" : ""}</td><td class="num">${i.puntuacion || "—"}</td><td>${i.estacionamiento ? '<span class="si">sí</span>' : "—"}</td>
+    <td class="num">${EUR(i.precio)}</td><td class="num">${EUR(i.precio * noches)}</td></tr>`;
+}
+
+function tablaFuente(t, f) {
+  const items = (f.items || []).slice(0, 12);
+  if (!items.length) return "";
+  const best = f.mejor;
+  if (t.tipo === "vuelo") {
+    const combo = f.combo ? `<p class="nota" style="margin-bottom:6px"><strong>Mejor combinación:</strong> ${esc(f.combo.ida)} + ${esc(f.combo.vuelta)} = <strong>${EUR(f.combo.precio)}</strong> por persona ida y vuelta</p>` : "";
+    return combo + `<div class="tabla"><table><thead><tr><th>Vuelo</th><th>Tramo</th><th class="num">Disponibilidad</th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaVuelo(i, null)).join("")}</tbody></table></div>`;
+  }
+  if (t.tipo === "tren") return `<div class="tabla"><table><thead><tr><th>Servicio</th><th class="num">Horario</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaTren(i, best)).join("")}</tbody></table></div>`;
+  if (f.fuente === "hostelworld") return `<div class="tabla"><table><thead><tr><th>Hostel</th><th>Zona</th><th>Recep. 24 h</th><th class="num">Nota</th><th class="num">Privada p/p/noche</th><th class="num">Compartida p/p/noche</th><th class="num">${t.noches} noches p/p</th></tr></thead><tbody>${items.map(i => filaHostel(i, best, t)).join("")}</tbody></table></div>`;
+  return `<div class="tabla"><table><thead><tr><th>Alojamiento</th><th></th><th class="num">Nota</th><th>Parking</th><th class="num">Por noche</th><th class="num">${t.noches} noche${t.noches > 1 ? "s" : ""}</th></tr></thead><tbody>${items.map(i => filaHotel(i, best, t.noches)).join("")}</tbody></table></div>`;
+}
+
+function bloqueFuente(t, f, ultimoTs) {
+  const viejo = f.ts && f.ts !== ultimoTs ? ` <span class="muted">(datos del ${fmtTs(f.ts)}, la última corrida falló)</span>` : "";
+  const estado = f.ok ? "" : `<span class="nota err">${esc(f.nota || "falló")}</span>`;
+  const nota = f.ok && f.nota ? `<span class="nota">${esc(f.nota)}</span>` : "";
+  return `<div class="fuente"><div class="fh"><span class="n">${NOMBRE_FUENTE[f.fuente] || f.fuente}</span><span class="mono">${EUR(f.mejor)}</span><span class="muted" style="font-size:12px">${esc(f.unidad || "")}</span>${viejo}${estado}${nota}</div>${tablaFuente(t, f)}</div>`;
+}
+
+function seccion(t) {
+  // fuentes a mostrar: la última corrida; si una falló y hay datos válidos previos, mostrarlos
+  const fuentes = (t.fuentes || []).map(name => {
+    const u = (t.fuentes_ultimo || []).find(f => f.fuente === name);
+    const v = (t.fuentes_ultimo_valido || {})[name];
+    if (u && (u.ok && u.items.length)) return u;
+    if (v) return { ...v, _fallo: u && !u.ok ? u.nota : null };
+    return u || { fuente: name, ok: false, nota: "todavía sin corridas", items: [] };
+  });
+  const fallos = fuentes.filter(f => f._fallo).map(f => `<span class="nota err">${NOMBRE_FUENTE[f.fuente]}: ${esc(f._fallo)}</span>`).join(" ");
+  return `<section class="tramo" id="${t.id}">
+    <div class="head"><h2>${esc(t.titulo)}</h2><span class="chip ${t.semaforo}">${SEMAFORO[t.semaforo]}</span></div>
+    <p class="desc">${esc(t.descripcion)}</p>
+    <div class="kpis">
+      <div class="kpi"><div class="eyebrow">Ahora</div><div class="v">${EUR(t.actual)}</div></div>
+      <div class="kpi"><div class="eyebrow">Referencia</div><div class="v">${t.referencia ? EUR(t.referencia.valor) : "—"}</div><div class="muted" style="font-size:12px">${esc(t.referencia ? t.referencia.unidad : "")}</div></div>
+      <div class="kpi"><div class="eyebrow">Mínimo visto</div><div class="v">${EUR(t.minimo_historico)}</div></div>
+      <div class="kpi"><div class="eyebrow">Corridas</div><div class="v">${t.serie.length}</div></div>
+    </div>
+    ${t.serie.filter(s => s.mejor != null).length >= 2 ? `<div class="grafico"><canvas id="c_${t.id}"></canvas></div>` : `<p class="muted" style="font-size:13px;margin-bottom:14px">El gráfico de evolución aparece cuando haya al menos dos corridas con precio.</p>`}
+    ${fallos}
+    <div class="fuentes">${fuentes.map(f => bloqueFuente(t, f, t.ultimo_ts)).join("")}</div>
+    ${enlaces(t)}
+  </section>`;
+}
+
+function grafico(t) {
+  const el = document.getElementById("c_" + t.id);
+  if (!el || typeof Chart === "undefined") return;
+  const css = getComputedStyle(document.documentElement);
+  const ink2 = css.getPropertyValue("--ink-2").trim(), line = css.getPropertyValue("--line").trim(), accent = css.getPropertyValue("--accent").trim(), ok = css.getPropertyValue("--ok").trim();
+  const labels = t.serie.map(s => fmtDia(s.ts) + " " + new Date(s.ts).toLocaleTimeString("es-ES", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit" }));
+  const datasets = [{ label: "Mejor precio", data: t.serie.map(s => s.mejor), borderColor: accent, backgroundColor: accent + "22", fill: true, tension: 0.2, pointRadius: 3, spanGaps: true }];
+  const paleta = ["#e07b39", "#2a9d8f", "#8e5ea2", "#c9a227"];
+  Object.keys(t.serie.reduce((acc, s) => Object.assign(acc, s.fuentes), {})).forEach((f, i) => {
+    if (t.fuentes.length < 2) return;
+    datasets.push({ label: NOMBRE_FUENTE[f] || f, data: t.serie.map(s => s.fuentes[f] ?? null), borderColor: paleta[i % paleta.length], borderDash: [4, 3], pointRadius: 2, tension: 0.2, spanGaps: true });
+  });
+  if (t.referencia) datasets.push({ label: "Referencia", data: t.serie.map(() => t.referencia.valor), borderColor: ok, borderDash: [2, 4], pointRadius: 0, borderWidth: 1.5 });
+  new Chart(el, { type: "line", data: { labels, datasets }, options: {
+    responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+    plugins: { legend: { labels: { color: ink2, boxWidth: 10, font: { size: 11 } } }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${EUR(c.parsed.y)}` } } },
+    scales: { x: { ticks: { color: ink2, maxTicksLimit: 8, font: { size: 11 } }, grid: { color: line } }, y: { ticks: { color: ink2, callback: v => EUR(v), font: { size: 11 } }, grid: { color: line } } }
+  } });
+}
+
+fetch("data.json", { cache: "no-store" }).then(r => r.json()).then(d => {
+  const tramos = Object.values(d.tramos);
+  const corridas = Math.max(0, ...tramos.map(t => t.serie.length));
+  document.getElementById("meta").innerHTML = `Última actualización: <strong>${fmtTs(d.generado)}</strong> (hora de Madrid)<br>${corridas} corrida${corridas === 1 ? " registrada" : "s registradas"} · se actualiza solo cada 6 h`;
+  document.getElementById("estado").hidden = true;
+  document.getElementById("resumen").innerHTML = tramos.map(tarjeta).join("");
+  document.getElementById("detalle").innerHTML = tramos.map(seccion).join("");
+  tramos.forEach(grafico);
+}).catch(e => { document.getElementById("estado").textContent = "No se pudieron cargar los datos (data.json). " + e; });
+</script>
+</body>
+</html>

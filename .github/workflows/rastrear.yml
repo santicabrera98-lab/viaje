@@ -1,0 +1,72 @@
+name: Rastrear precios y publicar web
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # cada 6 horas (UTC)
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+    paths: ["docs/**", "tracker/**", "config/**", ".github/workflows/rastrear.yml"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rastreador
+  cancel-in-progress: false
+
+jobs:
+  rastrear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Rastrear precios
+        run: python -m tracker.run
+        continue-on-error: true
+
+      - name: Regenerar datos de la web (por si la corrida falló a medias)
+        run: python -m tracker.run --solo-web
+
+      - name: Guardar historial en el repositorio
+        run: |
+          git config user.name "rastreador-precios"
+          git config user.email "rastreador-precios@users.noreply.github.com"
+          git add data docs/data.json
+          if git diff --cached --quiet; then echo "sin cambios"; exit 0; fi
+          git commit -m "datos: corrida $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3 4; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && break
+            sleep $((i * 5))
+          done
+
+      - uses: actions/configure-pages@v5
+        continue-on-error: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  publicar:
+    needs: rastrear
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
