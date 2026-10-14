@@ -58,11 +58,11 @@
       "id": "tren_vlc_bcn",
       "tipo": "tren",
       "titulo": "Valencia → Barcelona",
-      "descripcion": "Mar 23/2/2027, cualquier hora. Precio por persona (viajan 2).",
+      "descripcion": "Lun 22/2/2027, cualquier hora. Precio por persona (viajan 2).",
       "personas": 1,
       "origen": "valencia",
       "destino": "barcelona",
-      "fecha": "2027-02-23",
+      "fecha": "2027-02-22",
       "hora_min": null,
       "referencia": {
         "valor": 25,
@@ -76,39 +76,18 @@
       "viajan": 2
     },
     {
-      "id": "tren_bcn_vlc",
+      "id": "tren_bcn_mad",
       "tipo": "tren",
-      "titulo": "Barcelona → Valencia",
-      "descripcion": "Jue 25/2/2027, a la tarde (después de las 14:00). Precio por persona (viajan 2).",
+      "titulo": "Barcelona → Madrid",
+      "descripcion": "Vie 26/2/2027, cualquier hora. Precio por persona (viajan 2).",
       "personas": 1,
       "origen": "barcelona",
-      "destino": "valencia",
-      "fecha": "2027-02-25",
-      "hora_min": "14:00",
-      "referencia": {
-        "valor": 25,
-        "unidad": "por persona"
-      },
-      "fuentes": [
-        "renfe",
-        "ouigo",
-        "flixbus"
-      ],
-      "viajan": 2
-    },
-    {
-      "id": "tren_vlc_mad",
-      "tipo": "tren",
-      "titulo": "Valencia → Madrid",
-      "descripcion": "Sáb 27/2/2027, temprano (antes de las 11:00). Precio por persona (viajan 2).",
-      "personas": 1,
-      "origen": "valencia",
       "destino": "madrid",
-      "fecha": "2027-02-27",
+      "fecha": "2027-02-26",
       "hora_min": null,
-      "hora_max": "11:00",
+      "hora_max": null,
       "referencia": {
-        "valor": 25,
+        "valor": 30,
         "unidad": "por persona"
       },
       "fuentes": [
@@ -140,53 +119,17 @@
       "viajan": 4
     },
     {
-      "id": "hotel_cordoba",
-      "tipo": "alojamiento",
-      "titulo": "Córdoba: 1 noche con estacionamiento",
-      "descripcion": "Vie 19/2 a sáb 20/2. Búsqueda para 1 persona (viajan 4, en auto: necesita estacionamiento).",
-      "personas": 1,
-      "checkin": "2027-02-19",
-      "checkout": "2027-02-20",
-      "noches": 1,
-      "referencia": null,
-      "fuentes": [
-        "google_hotels"
-      ],
-      "google_hotels": {
-        "q": "hoteles en Córdoba con parking"
-      },
-      "viajan": 4
-    },
-    {
-      "id": "hotel_sevilla",
-      "tipo": "alojamiento",
-      "titulo": "Sevilla: 2 noches con estacionamiento",
-      "descripcion": "Sáb 20/2 a lun 22/2. Búsqueda para 1 persona (viajan 4, en auto: necesita estacionamiento).",
-      "personas": 1,
-      "checkin": "2027-02-20",
-      "checkout": "2027-02-22",
-      "noches": 2,
-      "referencia": null,
-      "fuentes": [
-        "google_hotels"
-      ],
-      "google_hotels": {
-        "q": "hoteles en Sevilla con parking"
-      },
-      "viajan": 4
-    },
-    {
       "id": "hotel_madrid",
       "tipo": "alojamiento",
-      "titulo": "Madrid: 1 noche, habitación doble",
-      "descripcion": "Sáb 27/2 a dom 28/2. Búsqueda para 1 persona (viajan 2 en habitación doble).",
+      "titulo": "Madrid: 2 noches, habitación doble",
+      "descripcion": "Vie 26/2 a dom 28/2. Búsqueda para 1 persona (viajan 2 en habitación doble).",
       "personas": 1,
-      "checkin": "2027-02-27",
+      "checkin": "2027-02-26",
       "checkout": "2027-02-28",
-      "noches": 1,
+      "noches": 2,
       "referencia": {
         "valor": 45,
-        "unidad": "por persona, la noche (90 € la doble)"
+        "unidad": "por persona y noche (90 € la doble)"
       },
       "fuentes": [
         "google_hotels"

@@ -24,9 +24,9 @@ Todas las búsquedas se hacen **para 1 persona**, así los precios se comparan d
 | Tramo | Fuente | Cómo |
 |---|---|---|
 | Vuelo Valencia ⇄ Roma | Ryanair | Precio por vuelo que carga la web de Ryanair; marca el vuelo nocturno y el aeropuerto (Fiumicino / Ciampino) |
-| Trenes Madrid–Valencia–Barcelona | Renfe, Ouigo, FlixBus | Renfe: búsqueda directa. Ouigo: la API que usa su propio buscador. FlixBus: API pública, que además revende Iryo |
+| Trenes Madrid → Valencia (10/2), Valencia → Barcelona (22/2) y Barcelona → Madrid (26/2) | Renfe, Ouigo, FlixBus | Renfe: búsqueda directa. Ouigo: la API que usa su propio buscador. FlixBus: API pública, que además revende Iryo |
 | Roma, hostel 4 noches | Hostelworld | Lista de hostels con precio por persona; abre los 12 más baratos para leer dirección, zona y si tienen recepción 24 h |
-| Córdoba y Sevilla con estacionamiento, Madrid doble | Google Hotels | Listado con fechas y huéspedes fijados, filtrado por "con parking" |
+| Madrid, 2 noches (26/2 al 28/2) | Google Hotels | Listado con fechas y huéspedes fijados |
 
 **No se rastrean** porque sus webs bloquean robots: Booking, Trainline, Omio, Iryo directo (aparece vía FlixBus),
 Alsa y BlaBlaCar. La web deja enlaces para revisarlos a mano.
