@@ -29,7 +29,8 @@
         "unidad": "ida y vuelta por persona"
       },
       "fuentes": [
-        "ryanair"
+        "ryanair",
+        "google_flights"
       ],
       "viajan": 4
     },

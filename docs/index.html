@@ -132,7 +132,7 @@ const EUR = v => v == null ? "—" : new Intl.NumberFormat("es-ES", { style: "cu
 const fmtTs = ts => ts ? new Date(ts).toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 const fmtDia = ts => new Date(ts).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit" });
 const SEMAFORO = { comprar: "Comprar", minimo: "Mínimo histórico", cerca: "Cerca", esperar: "Esperar", sin_datos: "Sin datos", no_abierto: "Venta no abierta" };
-const NOMBRE_FUENTE = { ryanair: "Ryanair", renfe: "Renfe", ouigo: "Ouigo", flixbus: "FlixBus (incluye Iryo)", hostelworld: "Hostelworld", google_hotels: "Google Hotels" };
+const NOMBRE_FUENTE = { ryanair: "Ryanair", renfe: "Renfe", ouigo: "Ouigo", flixbus: "FlixBus (incluye Iryo)", hostelworld: "Hostelworld", google_hotels: "Google Hotels", google_flights: "Google Flights (todas las aerolíneas)" };
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function enlaces(t) {
