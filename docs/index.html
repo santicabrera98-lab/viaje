@@ -182,8 +182,15 @@ function unidadCorta(t) {
 function filaVuelo(i, best) {
   return `<tr class="${i.precio === best ? "best" : ""} ${i.nocturno ? "night" : ""}"><td>${esc(i.etiqueta)}</td><td>${i.tramo}</td><td class="num">${i.asientos > 0 ? i.asientos + " asientos" : ""}</td><td class="num">${EUR(i.precio)}</td></tr>`;
 }
-function filaTren(i, best) {
-  return `<tr class="${i.precio === best ? "best" : ""}"><td>${esc(i.etiqueta)}</td><td class="num">${i.salida}–${i.llegada}</td><td>${i.completo ? '<span class="no">completo</span>' : ""}</td><td class="num">${EUR(i.precio)}</td></tr>`;
+function duracion(a, b) {
+  if (!a || !b) return "";
+  const [h1, m1] = a.split(":").map(Number), [h2, m2] = b.split(":").map(Number);
+  let min = (h2 * 60 + m2) - (h1 * 60 + m1); if (min < 0) min += 1440;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+}
+function filaTren(i, best, masRapido) {
+  const d = duracion(i.salida, i.llegada);
+  return `<tr class="${i.precio === best ? "best" : ""}"><td>${esc(i.etiqueta)}</td><td class="num">${i.salida}–${i.llegada}</td><td class="num">${d}${d && d === masRapido ? ' <span class="si" title="El más rápido">⚡</span>' : ""}</td><td>${i.completo ? '<span class="no">completo</span>' : ""}</td><td class="num">${EUR(i.precio)}</td></tr>`;
 }
 function filaHostel(i, best, t) {
   const noches = t.noches;
@@ -206,7 +213,11 @@ function tablaFuente(t, f) {
     const combo = f.combo ? `<p class="nota" style="margin-bottom:6px"><strong>Mejor combinación:</strong> ${esc(f.combo.ida)} + ${esc(f.combo.vuelta)} = <strong>${EUR(f.combo.precio)}</strong> por persona ida y vuelta</p>` : "";
     return combo + `<div class="tabla"><table><thead><tr><th>Vuelo</th><th>Tramo</th><th class="num">Disponibilidad</th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaVuelo(i, null)).join("")}</tbody></table></div>`;
   }
-  if (t.tipo === "tren") return `<div class="tabla"><table><thead><tr><th>Servicio</th><th class="num">Horario</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaTren(i, best)).join("")}</tbody></table></div>`;
+  if (t.tipo === "tren") {
+    const durs = items.map(i => duracion(i.salida, i.llegada)).filter(Boolean);
+    const masRapido = durs.length ? durs.slice().sort((a, b) => { const m = x => { const [h, mm] = x.match(/\d+/g).map(Number); return h * 60 + mm; }; return m(a) - m(b); })[0] : null;
+    return `<div class="tabla"><table><thead><tr><th>Servicio</th><th class="num">Horario</th><th class="num">Duración</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaTren(i, best, masRapido)).join("")}</tbody></table></div>`;
+  }
   if (f.fuente === "hostelworld") return `<div class="tabla"><table><thead><tr><th>Hostel</th><th>Zona</th><th>Recep. 24 h</th><th class="num">Nota</th><th class="num">Privada p/p/noche</th><th class="num">Compartida p/p/noche</th><th class="num">${t.noches} noches p/p</th></tr></thead><tbody>${items.map(i => filaHostel(i, best, t)).join("")}</tbody></table></div>`;
   return `<div class="tabla"><table><thead><tr><th>Alojamiento</th><th></th><th class="num">Nota</th><th>Parking</th><th class="num">Por noche (1 persona)</th><th class="num">${t.noches} noche${t.noches > 1 ? "s" : ""}</th></tr></thead><tbody>${items.map(i => filaHotel(i, best, t.noches)).join("")}</tbody></table></div>`;
 }
