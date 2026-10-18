@@ -1,6 +1,6 @@
 # Rastreador de precios: viaje a España, febrero 2027
 
-Bot que consulta cada 6 horas los precios de los vuelos, trenes y alojamientos del viaje,
+Bot que consulta cada 6 horas los precios de los trenes y del hotel de Madrid del viaje (el vuelo a Roma y el hostel ya están comprados),
 guarda el historial en este repositorio y publica una web donde se ve, de un vistazo,
 si conviene comprar.
 
@@ -23,9 +23,7 @@ Todas las búsquedas se hacen **para 1 persona**, así los precios se comparan d
 
 | Tramo | Fuente | Cómo |
 |---|---|---|
-| Vuelo Valencia ⇄ Roma | Ryanair y Google Flights | Ryanair: precio por vuelo desde su web. Google Flights: todas las aerolíneas (Wizz Air, Vueling, Ryanair) con ida elegida + vuelta más barata |
 | Trenes Madrid → Valencia (10/2), Valencia → Barcelona (22/2) y Barcelona → Madrid (26/2) | Renfe, Ouigo, FlixBus | Renfe: búsqueda directa. Ouigo: la API que usa su propio buscador. FlixBus: API pública, que además revende Iryo |
-| Roma, hostel 4 noches | Hostelworld | Lista de hostels con precio por persona; abre los 12 más baratos para leer dirección, zona y si tienen recepción 24 h |
 | Madrid, 2 noches (26/2 al 28/2) | Google Hotels | Listado con fechas y huéspedes fijados |
 
 **No se rastrean** porque sus webs bloquean robots: Booking, Trainline, Omio, Iryo directo (aparece vía FlixBus),

@@ -2,39 +2,6 @@
   "moneda": "EUR",
   "tramos": [
     {
-      "id": "vuelo_vlc_roma",
-      "tipo": "vuelo",
-      "titulo": "Vuelo Valencia ⇄ Roma",
-      "descripcion": "Ida jue 11/2/2027 (preferencia: a la noche). Vuelta lun 15/2/2027. Precio por 1 persona, solo mochila chica (viajan 4).",
-      "personas": 1,
-      "ida": {
-        "origen": "VLC",
-        "destinos": [
-          "FCO",
-          "CIA"
-        ],
-        "fecha": "2027-02-11",
-        "hora_min": "18:00"
-      },
-      "vuelta": {
-        "origenes": [
-          "FCO",
-          "CIA"
-        ],
-        "destino": "VLC",
-        "fecha": "2027-02-15"
-      },
-      "referencia": {
-        "valor": 60,
-        "unidad": "ida y vuelta por persona"
-      },
-      "fuentes": [
-        "ryanair",
-        "google_flights"
-      ],
-      "viajan": 4
-    },
-    {
       "id": "tren_mad_vlc",
       "tipo": "tren",
       "titulo": "Madrid → Valencia",
@@ -97,27 +64,6 @@
         "flixbus"
       ],
       "viajan": 2
-    },
-    {
-      "id": "hotel_roma",
-      "tipo": "alojamiento",
-      "titulo": "Roma: hostel 4 noches",
-      "descripcion": "Check-in jue 11/2 (llegada ~medianoche) a lun 15/2. Precio por persona y noche, búsqueda para 1 (viajan 4). Recepción 24 h obligatoria. Zonas: Monti, Termini (lado Monti), San Giovanni, San Lorenzo.",
-      "personas": 1,
-      "checkin": "2027-02-11",
-      "checkout": "2027-02-15",
-      "noches": 4,
-      "referencia": {
-        "valor": 130,
-        "unidad": "por persona, las 4 noches"
-      },
-      "fuentes": [
-        "hostelworld"
-      ],
-      "hostelworld": {
-        "url": "https://www.hostelworld.com/hostels/europe/italy/rome/"
-      },
-      "viajan": 4
     },
     {
       "id": "hotel_madrid",
