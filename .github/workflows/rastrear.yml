@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   rastrear:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # ubuntu-latest pasó a 26.04 y Playwright no instala Chromium ahí
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
 
   publicar:
     needs: rastrear
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # ubuntu-latest pasó a 26.04 y Playwright no instala Chromium ahí
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

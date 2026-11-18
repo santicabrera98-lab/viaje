@@ -68,8 +68,8 @@
     {
       "id": "hotel_madrid",
       "tipo": "alojamiento",
-      "titulo": "Madrid: 2 noches, habitación doble",
-      "descripcion": "Vie 26/2 a dom 28/2. Búsqueda para 1 persona (viajan 2 en habitación doble).",
+      "titulo": "Madrid: 2 noches, habitación doble (Lavapiés / Huertas / Atocha)",
+      "descripcion": "Vie 26/2 a dom 28/2. Búsqueda para 1 persona (viajan 2 en habitación doble). Zona entre Sol y Atocha: Lavapiés, Tirso de Molina, Antón Martín y Huertas.",
       "personas": 1,
       "checkin": "2027-02-26",
       "checkout": "2027-02-28",
@@ -82,7 +82,7 @@
         "google_hotels"
       ],
       "google_hotels": {
-        "q": "hoteles en Madrid centro"
+        "q": "hoteles y hostales en Lavapiés, Madrid"
       },
       "viajan": 2
     }

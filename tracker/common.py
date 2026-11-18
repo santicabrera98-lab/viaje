@@ -3,6 +3,7 @@ import asyncio
 import base64
 import datetime as dt
 import json
+import os
 import re
 from pathlib import Path
 
@@ -87,7 +88,8 @@ class Browser:
         from playwright.async_api import async_playwright
         self._pw = await async_playwright().start()
         self.browser = await self._pw.chromium.launch(
-            headless=True, args=["--disable-blink-features=AutomationControlled"])
+            headless=True, args=["--disable-blink-features=AutomationControlled"],
+            executable_path=os.environ.get("PW_CHROMIUM") or None)
         return self
 
     async def __aexit__(self, *exc):
