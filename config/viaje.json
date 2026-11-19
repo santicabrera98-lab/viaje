@@ -75,8 +75,8 @@
       "checkout": "2027-02-28",
       "noches": 2,
       "referencia": {
-        "valor": 45,
-        "unidad": "por persona y noche (90 € la doble)"
+        "valor": 33,
+        "unidad": "por persona y noche (66 € la doble)"
       },
       "fuentes": [
         "google_hotels"
