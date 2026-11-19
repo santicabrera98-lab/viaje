@@ -85,6 +85,27 @@
         "q": "hoteles y hostales en Lavapiés, Madrid"
       },
       "viajan": 2
+    },
+    {
+      "id": "partido_bernabeu",
+      "tipo": "evento",
+      "titulo": "Real Madrid – Valencia en el Bernabéu (jornada 26)",
+      "descripcion": "Fin de semana del 27 y 28/2, día y hora por confirmar (La Liga lo fija 2 a 3 semanas antes). Entrada de aforo general, por persona, en realmadrid.com. Solo sirve si cae el sábado 27 o el domingo 28 temprano: el vuelo de vuelta sale el 28 a las 22:45.",
+      "personas": 1,
+      "fecha": "2027-02-28",
+      "referencia": {
+        "valor": 80,
+        "unidad": "por persona, aforo general (esta temporada las más baratas salen 75 a 100 €)"
+      },
+      "fuentes": [
+        "realmadrid"
+      ],
+      "realmadrid": {
+        "match_id": "2651020",
+        "slug": "real-madrid-valencia",
+        "mes": "2027-02"
+      },
+      "viajan": 2
     }
   ],
   "nota": "Todos los precios se consultan para 1 persona, para compararlos con el presupuesto por persona. 'viajan' indica cuántos van en realidad."

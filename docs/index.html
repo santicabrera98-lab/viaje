@@ -132,7 +132,7 @@ const EUR = v => v == null ? "—" : new Intl.NumberFormat("es-ES", { style: "cu
 const fmtTs = ts => ts ? new Date(ts).toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 const fmtDia = ts => new Date(ts).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit" });
 const SEMAFORO = { comprar: "Comprar", minimo: "Mínimo histórico", cerca: "Cerca", esperar: "Esperar", sin_datos: "Sin datos", no_abierto: "Venta no abierta" };
-const NOMBRE_FUENTE = { ryanair: "Ryanair", renfe: "Renfe", ouigo: "Ouigo", flixbus: "FlixBus (incluye Iryo)", hostelworld: "Hostelworld", google_hotels: "Google Hotels", google_flights: "Google Flights (todas las aerolíneas)" };
+const NOMBRE_FUENTE = { ryanair: "Ryanair", renfe: "Renfe", ouigo: "Ouigo", flixbus: "FlixBus (incluye Iryo)", hostelworld: "Hostelworld", google_hotels: "Google Hotels", google_flights: "Google Flights (todas las aerolíneas)", realmadrid: "realmadrid.com (venta oficial)" };
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function enlaces(t) {
@@ -144,6 +144,8 @@ function enlaces(t) {
   } else if (t.tipo === "tren") {
     L.push(["Renfe", "https://www.renfe.com/es/es"]); L.push(["Ouigo", "https://www.ouigo.com/es/"]); L.push(["Iryo", "https://iryo.eu/es/home"]);
     L.push(["FlixBus", "https://www.flixbus.es/"]); L.push(["Alsa", "https://www.alsa.es/"]); L.push(["BlaBlaCar", "https://www.blablacar.es/"]);
+  } else if (t.tipo === "evento") {
+    L.push(["Entradas Real Madrid", "https://www.realmadrid.com/es-ES/entradas"]);
   } else {
     if (t.hostelworld) L.push(["Hostelworld", `${t.hostelworld.url}?from=${t.checkin}&to=${t.checkout}&guests=${t.personas}&currency=EUR`]);
     L.push(["Booking", `https://www.booking.com/searchresults.es.html?ss=${encodeURIComponent(t.titulo.split(":")[0])}&checkin=${t.checkin}&checkout=${t.checkout}&group_adults=${t.personas}&no_rooms=1&selected_currency=EUR`]);
@@ -174,7 +176,7 @@ function tarjeta(t) {
 
 function unidadCorta(t) {
   if (t.tipo === "vuelo") return "ida+vuelta p/p";
-  if (t.tipo === "tren") return "p/p";
+  if (t.tipo === "tren" || t.tipo === "evento") return "p/p";
   if (t.id === "hotel_roma") return "p/p y noche";
   return "por noche, 1 persona";
 }
@@ -217,6 +219,9 @@ function tablaFuente(t, f) {
     const durs = items.map(i => duracion(i.salida, i.llegada)).filter(Boolean);
     const masRapido = durs.length ? durs.slice().sort((a, b) => { const m = x => { const [h, mm] = x.match(/\d+/g).map(Number); return h * 60 + mm; }; return m(a) - m(b); })[0] : null;
     return `<div class="tabla"><table><thead><tr><th>Servicio</th><th class="num">Horario</th><th class="num">Duración</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => filaTren(i, best, masRapido)).join("")}</tbody></table></div>`;
+  }
+  if (t.tipo === "evento") {
+    return `<div class="tabla"><table><thead><tr><th>Entrada</th><th>Cuándo</th><th></th><th class="num">Precio p/p</th></tr></thead><tbody>${items.map(i => `<tr class="${i.precio === best ? "best" : ""}"><td>${i.url ? `<a href="${i.url}" target="_blank" rel="noopener">${esc(i.etiqueta)}</a>` : esc(i.etiqueta)}</td><td>${esc(i.cuando || "")}</td><td>${esc(i.venta || "")}</td><td class="num">${EUR(i.precio)}</td></tr>`).join("")}</tbody></table></div>`;
   }
   if (f.fuente === "hostelworld") return `<div class="tabla"><table><thead><tr><th>Hostel</th><th>Zona</th><th>Recep. 24 h</th><th class="num">Nota</th><th class="num">Privada p/p/noche</th><th class="num">Compartida p/p/noche</th><th class="num">${t.noches} noches p/p</th></tr></thead><tbody>${items.map(i => filaHostel(i, best, t)).join("")}</tbody></table></div>`;
   return `<div class="tabla"><table><thead><tr><th>Alojamiento</th><th></th><th class="num">Nota</th><th>Parking</th><th class="num">Por noche (1 persona)</th><th class="num">${t.noches} noche${t.noches > 1 ? "s" : ""}</th></tr></thead><tbody>${items.map(i => filaHotel(i, best, t.noches)).join("")}</tbody></table></div>`;
